@@ -136,6 +136,7 @@ export default function Home() {
         <div className="container footerInner">
           <span>© 2026 SANDS FISH FARM (U) LIMITED. All rights reserved.</span>
           <span>Better fish. Smarter farming.</span>
+          <a href="/feeding">Private feeding records</a>
         </div>
       </footer>
     </main>
