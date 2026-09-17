@@ -6,7 +6,7 @@ import { feedingClient } from '../../lib/feeding-client';
 import { TANKS, SEASON_START, canView, daysBetween, kampalaToday, kg, type Entry, type Member, type Role } from '../../lib/feeding';
 import styles from './feeding.module.css';
 
-type Draft = { day: string; tank: string; kg: string; notes: string; revision: number };
+type Draft = { day: string; tank: string; kg: string; feed_name: string; unit_price: string; notes: string; revision: number };
 const messageOf = (error: unknown) => error instanceof Error ? error.message : 'Could not complete that request. Please try again.';
 
 export default function FeedingApp() {
@@ -23,7 +23,7 @@ export default function FeedingApp() {
   const [start, setStart] = useState(SEASON_START);
   const [end, setEnd] = useState('2026-10-14');
   const [lastLoaded, setLastLoaded] = useState('');
-  const [draft, setDraft] = useState<Draft>({ day: SEASON_START, tank: 'T1', kg: '', notes: '', revision: 0 });
+  const [draft, setDraft] = useState<Draft>({ day: SEASON_START, tank: 'T1', kg: '', feed_name: '', unit_price: '', notes: '', revision: 0 });
   const requestId = useRef(0);
   const [today, setToday] = useState(SEASON_START);
   const viewAllowed = canView(member?.role);
@@ -120,7 +120,7 @@ export default function FeedingApp() {
 
   function chooseEntry(day: string, tank: string) {
     const existing = entries.find(row => row.day === day && row.tank === tank);
-    setDraft({ day, tank, kg: existing ? String(existing.kg) : '', notes: existing?.notes ?? '', revision: existing?.revision ?? 0 });
+    setDraft({ day, tank, kg: existing ? String(existing.kg) : '', notes: existing?.notes ?? '', feed_name: existing?.feed_name ?? '', unit_price: existing?.unit_price == null ? '' : String(existing.unit_price), revision: existing?.revision ?? 0 });
     setNotice('');
   }
 
@@ -132,7 +132,9 @@ export default function FeedingApp() {
     }
     setBusy(true); setError(''); setNotice('');
     try {
-      const values = { kg: amount, notes: draft.notes.trim() };
+      const price = draft.unit_price.trim() === '' ? null : Number(draft.unit_price);
+      if (price !== null && (!Number.isFinite(price) || price < 0 || !draft.feed_name.trim())) throw new Error('Enter a feed name and a valid price per kg, or leave the price blank.');
+      const values = { kg: amount, notes: draft.notes.trim(), feed_name: draft.feed_name.trim(), unit_price: price };
       const result = draft.revision
         ? await client.from('feeding_entries').update(values).eq('day', draft.day).eq('tank', draft.tank).eq('revision', draft.revision).select().maybeSingle()
         : await client.from('feeding_entries').insert({ ...values, day: draft.day, tank: draft.tank }).select().single();
@@ -182,7 +184,7 @@ export default function FeedingApp() {
   return <main className={styles.app}>
     <header className={styles.header}>
       <a href="/" className={styles.brand}>SANDS <span>FISH FARM</span></a>
-      <div className={styles.headerActions}><span className={styles.private}>Private records</span>{user && <button onClick={signOut}>Sign out</button>}</div>
+      <div className={styles.headerActions}><a href="/costs">Project costs</a><span className={styles.private}>Private records</span>{user && <button onClick={signOut}>Sign out</button>}</div>
     </header>
     <div className={styles.content}>
       <div className={styles.heading}><div><p className={styles.eyebrow}>PRODUCTION RECORDS</p><h1>Feeding log</h1><p>Season started 14 September 2026</p></div>{member && viewAllowed && <span className={styles.role}>{member.display_name} · {member.role}</span>}</div>
@@ -215,10 +217,10 @@ export default function FeedingApp() {
             <label>Date<input type="date" value={draft.day} min={start} max={end < today ? end : today} required onChange={e => chooseEntry(e.target.value, draft.tank)}/></label>
             <label>Tank<select value={draft.tank} onChange={e => chooseEntry(draft.day,e.target.value)}>{TANKS.map(tank => <option key={tank}>{tank}</option>)}</select></label>
             <label>Daily feed (kg)<input type="number" inputMode="decimal" min="0" max="999999999.999" step="0.001" required value={draft.kg} onChange={e => setDraft({...draft,kg:e.target.value})} placeholder="e.g. 0.250"/></label>
-            <label className={styles.notesInput}>Notes<input maxLength={500} value={draft.notes} onChange={e => setDraft({...draft,notes:e.target.value})} placeholder="Feed size, appetite or observations"/></label>
+            <label>Feed name<input maxLength={120} value={draft.feed_name} onChange={e => setDraft({...draft,feed_name:e.target.value})} placeholder="e.g. Perla 0.5 mm"/></label><label>Price per kg (UGX)<input type="number" min="0" max="9999999999.99" step="0.01" value={draft.unit_price} onChange={e => setDraft({...draft,unit_price:e.target.value})} placeholder="Leave blank if unknown"/></label><label className={styles.notesInput}>Notes<input maxLength={500} value={draft.notes} onChange={e => setDraft({...draft,notes:e.target.value})} placeholder="Feed size, appetite or observations"/></label>
             <button className={styles.primary} disabled={busy}>{busy ? 'Saving…' : draft.revision ? 'Save corrected total' : 'Save feed'}</button>
-            <button type="button" disabled={busy} onClick={async () => { if (!client) return; const r = await client.from('feeding_entries').select('*').eq('day',draft.day).eq('tank',draft.tank).maybeSingle(); if(r.error) {setError(r.error.message);return;} setDraft({...draft,kg:r.data ? String(r.data.kg) : '',notes:r.data?.notes ?? '',revision:r.data?.revision ?? 0}); }}>Load latest entry</button>
-          </form><small>100 g = 0.100 kg. Starting production: T1, T2, T5 and T6.</small></section>}
+            <button type="button" disabled={busy} onClick={async () => { if (!client) return; const r = await client.from('feeding_entries').select('*').eq('day',draft.day).eq('tank',draft.tank).maybeSingle(); if(r.error) {setError(r.error.message);return;} setDraft({...draft,kg:r.data ? String(r.data.kg) : '',notes:r.data?.notes ?? '',feed_name:r.data?.feed_name ?? '',unit_price:r.data?.unit_price == null ? '' : String(r.data.unit_price),revision:r.data?.revision ?? 0}); }}>Load latest entry</button>
+          </form><small>100 g = 0.100 kg. Feed cost = daily kg × price per kg. Blank prices are flagged in Project costs. For mixed feeds, enter a weighted average price and list the mix in notes. Starting production: T1, T2, T5 and T6.</small></section>}
           <section className={styles.records}><div className={styles.tableHeading}><h2>Daily feeding chart</h2><span>{start} to {end} · kg</span></div><div className={styles.tableScroll} tabIndex={0} role="region" aria-label="Feeding chart, scroll horizontally to see all tanks"><table>
             <thead><tr><th scope="col">Date</th>{TANKS.map(tank => <th key={tank} scope="col">{tank}</th>)}<th scope="col">Total kg</th></tr></thead>
             <tbody>{days.map(day => { const daily = entries.filter(row => row.day === day); return <tr key={day}><th scope="row">{new Date(day+'T12:00:00Z').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit',timeZone:'UTC'})}</th>{TANKS.map(tank => {const row = entryMap.get(`${day}:${tank}`); return <td key={tank}>{editAllowed && day <= today ? <button onClick={() => { chooseEntry(day,tank); document.querySelector(`.${styles.editor}`)?.scrollIntoView({behavior:'smooth',block:'center'}); }} aria-label={`Edit ${tank} on ${day}${row ? `, ${kg(row.kg)} kg` : ', unrecorded'}`} title={row?.notes}>{row ? kg(row.kg) : '—'}</button> : <span title={row?.notes}>{row ? kg(row.kg) : '—'}</span>}</td>;})}<td className={styles.total}>{daily.length ? kg(daily.reduce((sum,row)=>sum+Math.round(Number(row.kg)*1000),0)/1000) : '—'}</td></tr>;})}</tbody>

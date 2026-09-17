@@ -1,0 +1,11 @@
+# Project costs
+
+Season: 14 September 2026 through 31 March 2027. `/costs` uses the existing SANDS approval roles: viewers read/export, editors and owner enter/correct/void records. The verified owner account has already been provisioned. No sample stocking quantities or feed prices were inserted.
+
+Apply `project-costs.sql` once after `feeding.sql` in the SANDS project only. It adds nullable historical per-entry feed rates, a cost ledger with optimistic revisions, an append-only audit table, and an invoker-rights report RPC. Existing feed data remains unchanged and unpriced. All tables have RLS. No secret keys are used in frontend code.
+
+Cash and production are separate views of the ledger, never additive totals. A feed purchase is cash-only; feeding quantity times its saved per-kg rate is production-only. Assigned values of own-hatchery fingerlings are production-only. Ordinary costs can count in both. If payment and consumption occur on different dates, use separate cash-only and production-only entries. Equipment defaults to cash-only; no depreciation or inventory accounting is automated. Feed costing does not automatically maintain stock quantities or purchase batch allocation. Mixed feeds require a weighted average rate for the tank-day, with the mix in notes. Historical rates are retained unless explicitly corrected, and changing daily feeding quantity recalculates that day's consumed feed cost.
+
+Reports aggregate all entries up to the selected date from the season start. The RPC returns one JSON snapshot to avoid the REST row limit. Voided entries remain visible but do not affect totals. Missing rates on positive feeding quantities are flagged, never treated as complete zero cost. Future dates do not forecast costs. Amounts are rounded per line to two UGX decimal places. CSV contains ledger and daily running totals; browser print supports PDF.
+
+Validation: `npm run build`, `npm run test:security`, `node tests/project-costs-security.mjs`, `node tests/project-costs-totals.mjs`. SQL/RLS tests use isolated PGlite, not production. Live user interaction still requires a signed-in approved account; no credentials or real financial records were fabricated for testing.
