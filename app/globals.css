@@ -92,3 +92,34 @@ blockquote { margin: 0 0 24px; font-size: 34px; line-height: 1.16; font-weight: 
   .footerInner { flex-direction: column; }
   blockquote { font-size: 28px; }
 }
+
+/* Public homepage enquiry and visit details. */
+section[id] { scroll-margin-top: 110px; }
+a:focus-visible, summary:focus-visible { outline: 3px solid #d88900; outline-offset: 5px; }
+.heroLocation { margin-top: 24px; color: #dbe8ef; font-size: 16px; line-height: 1.6; }
+.serviceCard { display: flex; flex-direction: column; }
+.serviceLink { display: inline-block; color: #075a9e; font-weight: 700; line-height: 1.5; margin-top: 22px; text-underline-offset: 4px; }
+.serviceCard .serviceLink { margin-top: auto; padding-top: 22px; }
+.trainingSection { border-top: 1px solid #e6edf3; }
+.topicList { padding-left: 22px; line-height: 1.7; }
+.topicList li { margin-bottom: 8px; }
+.visitPanel { background: var(--light); border-left: 5px solid var(--blue); border-radius: 16px; padding: 32px; align-self: start; }
+.visitPanel h3 { font-size: 30px; line-height: 1.2; margin: 0 0 18px; }
+.visitActions { display: flex; flex-direction: column; align-items: flex-start; }
+.faqWrap { max-width: 850px; }
+.faqWrap details { padding: 22px 0; border-bottom: 1px solid #d6e0e8; }
+.faqWrap summary { cursor: pointer; font-size: 18px; font-weight: 700; line-height: 1.5; }
+.faqWrap details p { color: var(--muted); line-height: 1.7; margin-bottom: 0; }
+.contact .button { color: white; }
+.mobileContact { display: none; }
+@media (max-width: 620px) {
+  .hero h1 { font-size: clamp(36px, 9vw, 54px); line-height: 1.08; }
+  .heroActions .button { width: 100%; }
+  .mobileContact { position: sticky; bottom: 0; display: flex; z-index: 25; background: #082f49; padding: 10px 14px max(10px, env(safe-area-inset-bottom)); gap: 10px; }
+  .mobileContact a { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 46px; padding: 10px; color: white; text-align: center; font-weight: 700; text-decoration: none; border: 1px solid #86adc6; border-radius: 8px; font-size: 14px; }
+  .mobileContact a:last-child { background: #0b6fc2; border-color: #0b6fc2; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .button { transition: none; }
+}
