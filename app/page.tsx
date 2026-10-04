@@ -34,6 +34,7 @@ export default function Home() {
             <a href="#about">About Us</a>
             <a href="#services">Our Services</a>
             <a href="#training">Training</a>
+            <a href="/farmos">FarmOS</a>
             <a href="#contact">Contact</a>
           </nav>
           <a className="button primary topButton"
@@ -84,6 +85,15 @@ export default function Home() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section className="section services">
+        <div className="container">
+          <p className="eyebrow blue">FARMOS BY SANDS · PILOT</p>
+          <h2>Plan your next feed batch.</h2>
+          <p>Calculate ingredient quantities and costs, save your formulas and request a milling or ingredient quote.</p>
+          <a className="button primary" href="/farmos">Open FarmOS feed calculator →</a>
         </div>
       </section>
 
