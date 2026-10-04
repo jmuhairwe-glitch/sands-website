@@ -19,3 +19,17 @@ for(const ex of examples){assert.ok(Math.abs(ex.parts.reduce((s,[,v])=>s+v,0)-10
 assert.equal(examples[2].parts[1][0],17);
 assert.ok(catalog[17].name.startsWith('Poultry by-product'));
 console.log('FarmOS: golden totals, missing values, zero inclusion, CSV validation and template totals passed.');
+const {guidance,referenceWarnings}=await import('../app/farmos/feed-data.ts');
+assert.equal(catalog.find(i=>i.name.startsWith('Mukene')).protein,'58');
+assert.equal(catalog.find(i=>i.name.startsWith('Caridina')).protein,'56.1');
+assert.equal(guidance('Mukene meal (silverfish)','Catfish','Grower').ceiling,25);
+assert.equal(guidance('Mukene meal (silverfish)','Catfish','Starter').ceiling,55);
+assert.equal(guidance('Mukene meal (silverfish)','Chicken','Grower'),null);
+assert.equal(guidance('Maize grain, ground','Tilapia','Grower').ceiling,35);
+assert.equal(guidance('Maize grain, ground','Tilapia','Broodstock'),null);
+const fish=(name,share)=>({...r(share,'2000','58'),name});
+assert.equal(referenceWarnings([fish(catalog[15].name,20)],'Catfish','Grower').length,0);
+assert.equal(referenceWarnings([fish(catalog[15].name,20),fish(catalog[14].name,15)],'Catfish','Grower')[0].share,35);
+assert.equal(referenceWarnings([fish(catalog[15].name,20),fish(catalog[15].name,20)],'Catfish','Grower').length,1);
+assert.equal(referenceWarnings([fish(catalog[15].name,0)],'Catfish','Grower').length,0);
+console.log('Reference estimates, stage/species selection and combined inclusion warnings passed.');
