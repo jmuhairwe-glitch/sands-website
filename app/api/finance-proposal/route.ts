@@ -10,7 +10,7 @@ const numeric: (keyof FarmInputs)[] = [
   "budget", "tankLitres", "tankCount", "actualFlowLph", "fcr",
   "survival", "harvestKgEach", "salePriceKg", "cycleDays", "electricityTariff",
   "pumpWatts", "aerationWattsPerTank", "waterExchangePct", "waterCostPer1000L",
-  "starterBagKgPerTank", "otherSeasonCost", "upgradedTankExtraCostPerTank",
+  "starterBagKgPerTank", "otherSeasonCost", "upgradedTankExtraCostPerTank", "extraFiltrationBudget",
 ];
 const flags: (keyof FarmInputs)[] = ["biofilterPresent", "aerationPresent", "backupPresent"];
 const text = (x: unknown, limit: number) =>
@@ -66,7 +66,8 @@ export async function POST(request: NextRequest) {
         input.waterCostPer1000L < 0 || input.waterCostPer1000L > 100000 ||
         input.starterBagKgPerTank < 0 || input.starterBagKgPerTank > 100 ||
         input.otherSeasonCost < 0 || input.otherSeasonCost > 100000000 ||
-        input.upgradedTankExtraCostPerTank < 0 || input.upgradedTankExtraCostPerTank > 10000000) {
+        input.upgradedTankExtraCostPerTank < 0 || input.upgradedTankExtraCostPerTank > 10000000 ||
+        input.extraFiltrationBudget < 0 || input.extraFiltrationBudget > 50000000) {
       return NextResponse.json({ error: "One or more values are outside the planning limits" }, { status: 400 });
     }
     const ownContribution = details.contribution;
