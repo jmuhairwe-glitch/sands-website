@@ -102,3 +102,19 @@ No bank, investor, or customer should interpret the model as a certified RAS des
 - 20% daily NEW water exchange = **1,000 L/day per 5,000 L tank**; six tanks need **6,000 L/day**, in addition to internal recirculation. At 180 days six tanks use 1,080,000 L exchange water, plus first tank fills of 30,000 L.
 - New nominal shared pump spec = **50,000 L/h, 500 W, UGX 1,500,000**; no additional hardware cost compared with former 30,000 L/h, 300 W pump. Pump-only electricity at 500 W continuous x 180 days x UGX 850/kWh = **UGX 1,836,000** (up from UGX 1,101,600). With six 40 W aerators, 740 W total = **UGX 2,717,280** over 180 days (formerly UGX 1,982,880).
 - A 500 W pump claiming 50,000 L/h is only meaningful with its rated hydraulic head and pump curve. Confirm actual flow/head at filtration working pressure, not its nominal free-flow number.
+
+## Alternative: Retain standard 3,142 L working tanks, use 50% daily NEW water exchange and improve filtration
+
+This is a **scenario**, not a confirmed replacement of SANDS baseline 20% exchange. The website now offers one-click 20% and 50% comparison without resizing tanks.
+
+| Requirement | 1 tank at 20% | 1 tank at 50% | 6 tanks at 20% | 6 tanks at 50% |
+| --- | ---: | ---: | ---: | ---: |
+| Makeup water per day | 628.4 L | 1,571 L | 3,770.4 L | 9,426 L |
+| Exchange water per 180 days | 113,112 L | 282,780 L | 678,672 L | 1,696,680 L |
+| Increment from 20% | - | 169,668 L/cycle | - | 1,018,008 L/cycle |
+
+50% exchange does not change biomass density: **500 kg / 3.142 m³ = ~159 kg/m³**. Feed load and filter/oxygen demand remain driven by fish biomass, feed rate/composition and metabolic activity. Extra clean replacement water can dilute dissolved metabolites; it is not a substitute for measured solids removal, nitrification, adequate oxygen transfer or degassing. Test source water quality/pH/temperature and verify the capacity to handle equally large daily wastewater discharge. If feasible, prefer metered gradual exchange rather than an abrupt 50% water swap.
+
+The confirmed SANDS base package **already includes UGX 600,000 of filtration per tank**. To assess adding more filtration, the simulator offers `extraFiltrationBudget` as a **whole-system additional capital cost** to be quoted above the package, not recharging the original filter. Zero means extra filtration is not yet quoted, not that it is free or unnecessary. Existing 50,000 L/h, 500 W circulation pump is a separate closed-loop flow, not a new-water source. Water-source cost is still unpriced by default. At an EXAMPLE rate of UGX 3,000 per m³, six tanks at 50% exchange cost an additional UGX 3,054,024 per 180-day cycle versus 20%, excluding source-pump electricity, water treatment and discharge charges.
+
+The model deliberately does not grant approval for 500 kg harvest per small tank merely because 50% exchange was selected. Engineering validation must cover peak daily feed, TAN, nitrite, nitrate, dissolved oxygen/CO₂, alkalinity, solids, aeration and backup. Season cash-flow/payback must include priced source water and extra filtration capital when known.
