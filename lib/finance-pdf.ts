@@ -162,7 +162,7 @@ export function generateFarmProposal(
   writer.item("Total initial project budget", ugx(farm.projectTotal));
   writer.item("Applicant contribution", ugx(contribution));
   writer.item("Funding requested", ugx(requested));
-  writer.item("Expected cash surplus / season", ugx(investment.cashSurplusPerCycle));
+  writer.item("Expected repeat-season cash surplus", ugx(investment.cashSurplusPerCycle));
   writer.item("Estimated equipment-investment payback", payback(investment.paybackSeasons, investment.paybackMonths));
 
   writer.heading("2. PROJECT DESIGN & STOCKING");
@@ -182,9 +182,17 @@ export function generateFarmProposal(
   writer.item("Cycle duration", days + " days");
 
   writer.heading("3. SETUP & FIRST-SEASON COSTS");
-  writer.item(input.mode === "new" ? "RAS equipment and installation" : "Provisional missing equipment", ugx(farm.infrastructure));
-  writer.item("Fingerlings", ugx(farm.fingerlingsCost));
-  writer.item("Full production cycle feed", ugx(farm.feedCost));
+  if (farm.isSandsPackage) {
+    writer.item("Inclusive SANDS tank package(s)", ugx(farm.packageCost));
+    writer.item("Fish supplied (no extra charge)", quantity(farm.includedFingerlings) + " fingerlings");
+    writer.item("Starter feed bag(s) included", quantity(farm.includedStarterFeedKg, 1) + " kg - bag size unconfirmed");
+    writer.item("Additional first-season feed", quantity(farm.additionalFeedKg, 1) + " kg / " + ugx(farm.feedCost));
+    writer.item("Extra backup power allowance", ugx(farm.backupAllowance));
+  } else {
+    writer.item(input.mode === "new" ? "Provisional RAS installation" : "Provisional missing equipment", ugx(farm.infrastructure));
+    writer.item("Initial fingerlings", ugx(farm.fingerlingsCost));
+    writer.item("Full first-season feed", ugx(farm.feedCost));
+  }
   writer.item("Electricity estimate", ugx(farm.energyCost));
   writer.item("SANDS-reported shared pump power", quantity(input.pumpWatts) + " W per pump");
   writer.item("SANDS-reported aerator rating", quantity(input.aerationWattsPerTank) + " W per aerator");
@@ -193,11 +201,16 @@ export function generateFarmProposal(
   writer.item("Fresh water (first fill + exchange)", ugx(farm.waterSupplyCost) + (input.waterCostPer1000L === 0 ? " - unpriced" : ""));
   writer.item("Contingency (10%)", ugx(farm.contingency));
   writer.item("Total first-cycle financing need", ugx(farm.projectTotal));
-  writer.note("SANDS-reported standard prices (UGX): tank 1,100,000 PER TANK; mechanical and biological filtration 600,000 PER TANK (confirmed); aeration 350,000 and piping/installation 350,000 provisionally costed per tank; ONE 30,000 L/hour pump costing 1,500,000 shared across up to six tanks. Check delivered flow at installed head. Pump electrical input is SANDS-reported as 300 W per shared pump; confirm measured draw. Aerator power is SANDS-reported as 40 W each and the model assumes one aerator per tank; confirm whether shared. Backup power 1,200,000, support, testing and source-water charges are not yet verified. Feed: " + ugx(profile.feedPriceKg) + "/kg. Fingerlings 500 each still provisional. These are not contractual quotations.");
+  if (farm.isSandsPackage) {
+    writer.note("SANDS standard CATFISH package: one tank UGX 5,000,000; for two or more tanks UGX 3,500,000 per tank. Inclusive package covers tanks, shared pump (30,000 L/h for up to six tanks), UGX 600,000 filtration per tank, aeration, installation, initial fingerlings including survival allowance, and one starter feed bag PER TANK. Bag weight currently assumed " + input.starterBagKgPerTank + " kg (NOT YET CONFIRMED). The package price is not broken down and none of these included items is billed again. New feed supply is modeled at UGX 2,500/kg. Extra backup power UGX 1,200,000, water and support allowances, and feed FCR are subject to verification. Bank/project quotation is conditional on safe 500 kg/tank design.");
+  } else {
+    writer.note("Existing-tank/other-species equipment costs are provisional component estimates. The UGX 5m/3.5m packages have only been confirmed for standard new catfish systems. Feed and fingerling costs and engineering requirements must be verified for the selected species.");
+  }
 
   writer.heading("4. FEED & FILTRATION ENGINEERING SCREEN");
   writer.item("Feed conversion ratio (FCR)", input.fcr.toFixed(2));
-  writer.item("Total feed, with 8% allowance", quantity(farm.feedKg, 1) + " kg");
+  writer.item("Total feed needed (incl. buffer)", quantity(farm.feedKg, 1) + " kg");
+  if (farm.isSandsPackage) writer.item("Already included starter feed", quantity(farm.includedStarterFeedKg, 1) + " kg - assumed");
   writer.item("Peak daily feed (screening)", quantity(farm.peakFeedKgDay, 2) + " kg/day");
   writer.item("Indicative ammonia nitrogen load", quantity(farm.tanGramsDay, 1) + " g TAN/day");
   writer.item("Indicative oxygen demand", quantity(farm.oxygenKgDay, 2) + " kg O2/day");
@@ -228,17 +241,17 @@ export function generateFarmProposal(
   writer.item("Projected fish sales", ugx(farm.projectedSales));
   writer.item("Recurring cost including 10% reserve", ugx(investment.recurringCycleOutlay));
   writer.item("Expected season cash surplus", ugx(investment.cashSurplusPerCycle));
-  writer.item("Initial capital including 10% reserve", ugx(investment.initialCapital));
-  writer.item("Initial cycle net cash after total setup", ugx(farm.firstCycleCashResult));
+  writer.item("First-season total cost incl. reserve", ugx(investment.initialCapital));
+  writer.item("First-season harvest minus all outlays", ugx(investment.firstCycleCashResult));
   writer.item("Estimated payback period", payback(investment.paybackSeasons, investment.paybackMonths));
-  writer.paragraph("Payback here means recovery of modeled initial equipment/setup spending from recurring season cash surpluses. It is based on rounded complete seasons, with no recovery shown if a scenario has zero or negative season cash surplus. It is not a guaranteed return and does not include loan interest, repayments, tax, major capital replacement, depreciation, land rent or unmodeled labour.");
+  writer.paragraph("Payback means the complete production season when cumulative cash flow first becomes nonnegative. The first cycle counts the inclusive SANDS package and only feed AFTER the starter bag; repeat cycles must purchase replacement fingerlings and ALL feed. A 10% cost allowance is included, but the estimate excludes loan interest/repayments, taxes, depreciation, land rent, major repairs and other unpriced costs. The assumed 1.3 feed conversion ratio for the planned offals/bran/maize feed MUST be validated before a lender relies on the projection.");
 
   writer.heading("6. PRICE & PRODUCTION SENSITIVITY");
   investment.scenarios.forEach(s => {
     writer.paragraph(s.label + ": " + (s.survival * 100).toFixed(1) +
       "% survival, FCR " + s.fcr.toFixed(2) + ", sale price " + ugx(s.priceKg) +
       "/kg; harvest " + quantity(s.harvestKg, 1) + " kg; revenue " + ugx(s.sales) +
-      "; season cash surplus " + ugx(s.cashSurplus) +
+      "; first-season cash net " + ugx(s.firstCycleCashResult) + "; repeat-season cash surplus " + ugx(s.cashSurplus) +
       "; equipment payback " + payback(s.paybackSeasons, s.paybackMonths) + ".");
   });
 
