@@ -1,6 +1,7 @@
 /**
  * Preliminary aquaculture budgeting model, not a stocking approval, quote or loan offer.
- * SANDS must replace indicative equipment, electricity and service allowances with quotes.
+ * Tank, pump, filter, aeration, installation, feed and selling-price inputs were
+ * provided by SANDS; remaining site, power, safety and operating costs require confirmation.
  */
 export type Species = "catfish" | "tilapia";
 export type FarmMode = "new" | "existing";
@@ -83,7 +84,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const count = Math.max(1, Math.min(100, Math.floor(tanks)));
   const volumeLitres = litresPerTank * count;
   const survival = clean(inputs.survival, .85, .5, .98);
-  const weightKg = clean(inputs.harvestKgEach, .8, .3, 2.0);
+  const weightKg = clean(inputs.harvestKgEach, .3, .3, 2.0);
   const fcr = clean(inputs.fcr, 1.3, 1, 2.8);
   const days = clean(inputs.cycleDays, 180, 90, 365);
   const nominalPumpLph = Math.ceil(volumeLitres * 1.25);
