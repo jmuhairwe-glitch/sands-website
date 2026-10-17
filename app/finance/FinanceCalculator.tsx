@@ -118,8 +118,12 @@ export default function FinanceCalculator() {
 
           <div className="financeField">
             <label htmlFor="waterExchangePct">Daily NEW water exchange (% of operating volume)</label>
+            <div className="financeMode" role="group" aria-label="Daily water exchange presets">
+              <button type="button" className={inputs.waterExchangePct === 20 ? "selected" : ""} aria-pressed={inputs.waterExchangePct === 20} onClick={() => set({ waterExchangePct: 20 })}>20% · Baseline</button>
+              <button type="button" className={inputs.waterExchangePct === 50 ? "selected" : ""} aria-pressed={inputs.waterExchangePct === 50} onClick={() => set({ waterExchangePct: 50 })}>50% · High exchange</button>
+            </div>
             <Numeric id="waterExchangePct" value={inputs.waterExchangePct} min={20} max={100} step={5} onChange={(waterExchangePct) => set({ waterExchangePct })}/>
-            <small>SANDS minimum: 20% per day. Fresh water is separate from recirculating pump flow.</small>
+            <small>SANDS minimum: 20% new water per day. Try 50% with the same tanks, then compare new-water demand and additional expenses below. Fresh replacement is separate from the recirculating pump. Extra wastewater needs safe handling.</small>
           </div>
           {isNew ? (
             <div className="financeField">
@@ -171,6 +175,7 @@ export default function FinanceCalculator() {
               <div className="financeField"><label htmlFor="aerationWatts">Aerator electrical draw (W per aerator; assumes one per tank)</label><Numeric id="aerationWatts" value={inputs.aerationWattsPerTank} min={0} max={3000} step={5} onChange={(aerationWattsPerTank) => set({ aerationWattsPerTank })}/><small>SANDS-reported aerator rating: 40 W. The calculator currently budgets one aerator per tank; confirm if the aeration units are shared between tanks.</small></div>
               {isNew && inputs.tankLitres === SANDS_TANK.upgradedWorkingLitres && <div className="financeField"><label htmlFor="upgradeExtraCost">Extra sheet + extra pallets + extra fabrication labour (UGX PER 5,000 L tank)</label><Numeric id="upgradeExtraCost" value={inputs.upgradedTankExtraCostPerTank} min={0} max={10000000} step={50000} onChange={(upgradedTankExtraCostPerTank) => set({ upgradedTankExtraCostPerTank })}/><small>Enter the quoted additional materials/labour cost ABOVE the original complete 3,142 L package. UGX 0 means UNPRICED, not a free upgrade. Current base uses four pallets; extra pallet count/price are awaiting SANDS confirmation.</small></div>}
               <div className="financeField"><label htmlFor="starterBag">Starter bag included with each new catfish tank (kg, assumed)</label><Numeric id="starterBag" value={inputs.starterBagKgPerTank} min={0} max={100} step={1} onChange={(starterBagKgPerTank) => set({ starterBagKgPerTank })}/><small>The package includes one bag per tank. Bag weight is NOT YET CONFIRMED; 25 kg is an editable example. Only this quantity is deducted from the additional feed purchased.</small></div>
+              <div className="financeField"><label htmlFor="extraFilter">ADDITIONAL upgraded filtration budget for the entire system (UGX)</label><Numeric id="extraFilter" value={inputs.extraFiltrationBudget} min={0} max={50000000} step={50000} onChange={(extraFiltrationBudget) => set({ extraFiltrationBudget })}/><small>Only price upgrades BEYOND the mechanical/biological filters already included in the SANDS package (UGX 600,000 per tank). Enter a verified extra cost for improved solids removal, larger media, filtration plumbing or oxygenation. Zero means NOT QUOTED, not that upgrades are unnecessary.</small></div>
               <div className="financeField"><label htmlFor="seasonOtherCost">Other running costs per season (UGX)</label><Numeric id="seasonOtherCost" value={inputs.otherSeasonCost} min={0} max={100000000} step={100000} onChange={(otherSeasonCost) => set({ otherSeasonCost })}/><small>Add labour, harvesting, delivery, marketing, repairs and other costs not already covered by the training/testing allowances. Zero means these expenses are UNPRICED, not that they don't exist. They are deducted from every season, including the first.</small></div>
               <div className="financeField"><label htmlFor="waterRate">Source water cost (UGX/1,000 L)</label><Numeric id="waterRate" value={inputs.waterCostPer1000L} min={0} max={100000} step={500} onChange={(waterCostPer1000L) => set({ waterCostPer1000L })}/><small>UGX 0 means not priced, NOT free. Enter a real water cost for the profitability estimate.</small></div>
             </div>
@@ -207,6 +212,7 @@ export default function FinanceCalculator() {
               <div className="financeCost"><span>Initial fingerlings</span><b>{ugx(result.fingerlingsCost)}</b></div>
               <div className="financeCost"><span>First season feed</span><b>{ugx(result.feedCost)}</b></div>
             </>}
+            {result.extraFiltrationBudget > 0 && <div className="financeCost"><span>Additional filtration upgrade (ABOVE package)</span><b>{ugx(result.extraFiltrationBudget)}</b></div>}
             <div className="financeCost"><span>Estimated power</span><b>{ugx(result.energyCost)}</b></div>
             <div className="financeCost"><span>Support and training allowance</span><b>{ugx(result.supportCost)}</b></div>
             <div className="financeCost"><span>Water testing and supplies</span><b>{ugx(result.waterTestingCost)}</b></div>
@@ -247,7 +253,18 @@ export default function FinanceCalculator() {
               <div><small>Initial tank fill (new systems)</small><strong>{quantity(result.initialFillLitres)} L</strong></div>
               <div><small>Total first-season NEW water</small><strong>{quantity(result.firstCycleFreshWaterLitres)} L</strong></div>
             </div>
-            <p className="financeMuted">A 20% exchange for a 3,142 L working tank is approximately 628 L/day of new water (and an equal amount removed to keep the level constant). The pump's 30,000 L/hour internal flow does not count as new water. Water quality and reliable source capacity must be verified. Evaporation, cleaning and spills require additional top-ups. {inputs.waterCostPer1000L === 0 ? "Water supply is currently UNPRICED. Set the per-1,000-litre water price in advanced settings; UGX 0 does not mean the water is free." : "Water source charges at " + ugx(inputs.waterCostPer1000L) + " per 1,000 L are included in running costs, but treatment, source pumping and wastewater charges still need checking."}</p>
+            <h4>Same tanks — compare 20% and 50% new-water exchange</h4>
+            <div className="financeScenarioTable">
+              <div className="financeScenarioHeading"><span>Daily replacement</span><span>Litres per day</span><span>Litres per season</span></div>
+              {[20, 50].map(pct => (
+                <div className="financeScenarioRow" key={pct}>
+                  <span>{pct}%{inputs.waterExchangePct === pct ? " (selected)" : ""}</span>
+                  <span>{quantity(result.volumeLitres * pct / 100)} L</span>
+                  <strong>{quantity(result.volumeLitres * pct / 100 * inputs.cycleDays)} L</strong>
+                </div>
+              ))}
+            </div>
+            <p className="financeMuted">Choosing 50% instead of 20% adds {quantity(result.volumeLitres * .30)} L/day and {quantity(result.volumeLitres * .30 * inputs.cycleDays)} L per season at the same tank size. The incremental water-source charge would be {inputs.waterCostPer1000L === 0 ? "UNPRICED (enter UGX per 1,000 L above)" : ugx(result.volumeLitres * .30 * inputs.cycleDays / 1000 * inputs.waterCostPer1000L)}; treatment, water pumping and discharge charges may be additional. The 50,000 L/hour shared RAS pump only circulates existing system water; it does not provide this new supply. Extra filtration does not guarantee the 500 kg/tank harvest: check biofilter TAN capacity, solids capture, oxygen transfer and CO₂ removal.</p>
           </div>
 
           <div className="financePanel">
