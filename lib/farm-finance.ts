@@ -112,7 +112,9 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     ? Math.floor(effectiveVolume / SANDS_TANK.workingLitres * SANDS_TANK.catfishHarvestTargetPerTank)
     : capacityHarvestCount;
   const fishHarvested = Math.max(0, Math.min(capacityHarvestCount, requestedHarvestCount));
-  const fishStocked = Math.ceil(fishHarvested / survival);
+  // Round up starter fish PER tank, so each tank independently has enough
+  // fingerlings to achieve its harvest target after modeled mortality.
+  const fishStocked = Math.ceil(fishHarvested / count / survival) * count;
   const harvestKg = fishHarvested * weightKg;
   const feedKg = Math.max(0, (harvestKg - fishStocked * .025) * fcr * 1.08);
   const peakFeedKgDay = harvestKg * .02;
