@@ -21,6 +21,8 @@ export type FarmInputs = {
   salePriceKg: number;
   cycleDays: number;
   electricityTariff: number;
+  pumpWatts: number; // provisional electrical power draw PER installed pump
+  aerationWattsPerTank: number; // provisional electric draw PER tank
 };
 export type FarmResult = {
   feasible: boolean;
@@ -61,6 +63,7 @@ export const DEFAULTS: FarmInputs = {
   aerationPresent: false, backupPresent: false,
   fcr: 1.3, survival: .85, harvestKgEach: 1, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
+  pumpWatts: 1500, aerationWattsPerTank: 100,
 };
 
 // SANDS circular tank: 2 m diameter x 1.2 m physical height. Brimful: ~3,770 L.
@@ -133,8 +136,11 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
 
   const fingerlingsCost = fishStocked * species.fingerlingPrice;
   const feedCost = feedKg * species.feedPriceKg;
-  // Placeholder electrical-load assumption, not derived from pump flow.
-  const assumedWatts = 120 + count * 100;
+  // These loads are deliberately exposed to users; pump flow in L/h does
+  // NOT specify electrical power. Default 1,500 W per pump and 100 W/tank
+  // aeration are UNCONFIRMED estimates and must be calibrated from nameplates.
+  const assumedWatts = clean(inputs.pumpWatts, 1500, 50, 10000) * (isExisting ? 1 : pumpUnits)
+    + clean(inputs.aerationWattsPerTank, 100, 0, 3000) * count;
   const energyCost = (assumedWatts / 1000) * 24 * days *
     clean(inputs.electricityTariff, 850, 100, 2500);
   const supportCost = 400000 + 180000 * count;
@@ -149,7 +155,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   if (isExisting && effectiveFlow < nominalPumpLph) warnings.push("Reported circulation is below the preliminary turnover screen; fish numbers have been reduced. Check pump head and actual flow.");
   if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
   if (!isExisting && count > 1) warnings.push("Shared 30,000 L/h pump allocation is preliminary: verify delivery at operating head and biological/mechanical filtration capacity.");
-  warnings.push("Backup power UGX 1,200,000, operating wattage, support, testing, and contingency remain estimates rather than confirmed SANDS costs.");
+  warnings.push("Backup power UGX 1,200,000, pump/aeration W, support, testing and contingency remain estimates, not confirmed SANDS costs. 30,000 L/h pump flow does not tell us electric power.");
   if (inputs.species === "catfish") {
     const density = harvestKg / Math.max(.001, volumeLitres / 1000);
     if (density > 100) warnings.push("HIGH-INTENSITY DESIGN: " + Math.round(density) + " kg/m3 expected harvest biomass. This is a proposed output target only. SANDS must verify aeration/oxygen transfer, filtration TAN removal, solids, CO2 stripping, backup and water-quality monitoring. No stocking approval is implied.");
