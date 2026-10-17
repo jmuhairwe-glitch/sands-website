@@ -150,8 +150,10 @@ export default function FinanceCalculator() {
               <div className="financeField"><label htmlFor="salePrice">Selling price (UGX/kg)</label><Numeric id="salePrice" value={inputs.salePriceKg} min={1000} max={50000} step={500} onChange={(salePriceKg) => set({ salePriceKg })}/></div>
               <div className="financeField"><label htmlFor="cycleDays">Cycle length (days)</label><Numeric id="cycleDays" value={inputs.cycleDays} min={90} max={365} step={10} onChange={(cycleDays) => set({ cycleDays })}/></div>
               <div className="financeField"><label htmlFor="powerTariff">Electricity (UGX/kWh)</label><Numeric id="powerTariff" value={inputs.electricityTariff} min={100} max={2500} step={50} onChange={(electricityTariff) => set({ electricityTariff })}/></div>
+              <div className="financeField"><label htmlFor="pumpWatts">Pump electrical draw (W per pump)</label><Numeric id="pumpWatts" value={inputs.pumpWatts} min={50} max={10000} step={50} onChange={(pumpWatts) => set({ pumpWatts })}/></div>
+              <div className="financeField"><label htmlFor="aerationWatts">Aeration electrical draw (W per tank)</label><Numeric id="aerationWatts" value={inputs.aerationWattsPerTank} min={0} max={3000} step={25} onChange={(aerationWattsPerTank) => set({ aerationWattsPerTank })}/></div>
             </div>
-            <p className="financeMuted">SANDS catfish selling price and feed/equipment costs have been updated from supplied figures; survival, stocking-weight, energy use, operating water depth, and safe filtration capacity still require confirmation. Fingerlings remain UGX 500/fish pending confirmation, and feed is {ugx(profile.feedPriceKg)}/kg.</p>
+            <p className="financeMuted">SANDS catfish feed/equipment costs and sales target were updated from supplied figures. Stocking is now reverse-calculated from the target HARVEST count to include mortality. Survival, starting weight, FCR, pump wattage, operating depth, and high-intensity filtration capacity still need confirmation. Fingerlings remain UGX 500/fish pending confirmation; feed is {ugx(profile.feedPriceKg)}/kg.</p>
           </details>
         </section>
 
@@ -163,10 +165,12 @@ export default function FinanceCalculator() {
           </div>
           <div className="financeFigures">
             <div><small>Culture tanks</small><strong>{quantity(result.tanks)}</strong><span>{quantity(inputs.tankLitres)} L each</span></div>
-            <div><small>Fingerlings to stock</small><strong>{quantity(result.fishStocked)}</strong><span>{quantity(result.fishHarvested)} estimated survivors</span></div>
+            <div><small>Fingerlings to stock (mortality included)</small><strong>{quantity(result.fishStocked)}</strong><span>Target: {quantity(result.fishHarvested)} fish harvested at {(inputs.survival * 100).toFixed(0)}% survival</span></div>
             <div><small>Harvest biomass</small><strong>{quantity(result.harvestKg, 1)} kg</strong><span>At {inputs.harvestKgEach} kg/fish</span></div>
             <div><small>Full-cycle feed</small><strong>{quantity(result.feedKg, 1)} kg</strong><span>FCR {inputs.fcr} plus 8% buffer</span></div>
           </div>
+
+          {inputs.species === "catfish" && result.harvestKg / Math.max(0.001, result.volumeLitres / 1000) > 100 && <div className="financeCautions"><strong>High-intensity production target — engineering review required</strong><p>{quantity(result.fishHarvested)} harvest fish × {inputs.harvestKgEach} kg means {quantity(result.harvestKg, 1)} kg across {quantity(result.volumeLitres)} working litres ({quantity(result.harvestKg / (result.volumeLitres / 1000), 1)} kg/m³). This target is NOT approval to stock. A SANDS site assessment must verify oxygen transfer, pump duty, biofilter ammonia-removal capacity, solids/CO₂ removal, backup power and water quality before a financing proposal can become a final quotation.</p></div>}
 
           <div className="financePanel">
             <h3>Where the money goes</h3>
@@ -177,7 +181,7 @@ export default function FinanceCalculator() {
             <div className="financeCost"><span>Support and training allowance</span><b>{ugx(result.supportCost)}</b></div>
             <div className="financeCost"><span>Water testing and supplies</span><b>{ugx(result.waterTestingCost)}</b></div>
             <div className="financeCost"><span>10% contingency</span><b>{ugx(result.contingency)}</b></div>
-            {isNew && <p className="financeMuted">SANDS component prices: tank {ugx(SANDS_TANK.tankCost)}, filter {ugx(SANDS_TANK.filterCost)}, aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)} per tank; shared pump {ugx(SANDS_TANK.pumpCost)} (reported {quantity(SANDS_TANK.pumpFlowLph)} L/h). Backup power {ugx(1200000)} is only a provisional allowance. Actual pump power, filtration capacity, site work and running costs still need confirmation.</p>}
+            {isNew && <p className="financeMuted">SANDS component prices: tank {ugx(SANDS_TANK.tankCost)}, filter {ugx(SANDS_TANK.filterCost)}, aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)} per tank; shared pump {ugx(SANDS_TANK.pumpCost)} (reported {quantity(SANDS_TANK.pumpFlowLph)} L/h). Backup power {ugx(1200000)} is only a provisional allowance. The standard UGX 600,000 filtration package is NOT yet certified for a 500 kg/tank production target. Electricity uses an UNCONFIRMED {quantity(inputs.pumpWatts)} W per pump + {quantity(inputs.aerationWattsPerTank)} W/tank; change these in advanced settings to match actual equipment.</p>}
             <div className="financeTotal"><span>Total estimated project</span><strong>{ugx(result.projectTotal)}</strong></div>
             <div className="financeMeter" aria-label="Percentage of your budget used"><span style={{ width: Math.min(100, budgetUsedPercent) + "%" }} /></div>
             <p className={result.amountRemaining < 0 ? "financeShortfall" : "financeMuted"}>
