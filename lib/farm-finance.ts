@@ -51,7 +51,7 @@ export type FarmResult = {
 };
 
 export const SPECIES = {
-  catfish: { label: "African catfish", densityKgM3: 45, feedPriceKg: 3000, fingerlingPrice: 500, defaultFcr: 1.3, defaultHarvestKg: .3, defaultSalePriceKg: 15000 },
+  catfish: { label: "African catfish", densityKgM3: 160, feedPriceKg: 3000, fingerlingPrice: 500, defaultFcr: 1.3, defaultHarvestKg: 1, defaultSalePriceKg: 15000 },
   tilapia: { label: "Tilapia", densityKgM3: 20, feedPriceKg: 2900, fingerlingPrice: 500, defaultFcr: 1.5, defaultHarvestKg: .6, defaultSalePriceKg: 10000 },
 } as const;
 
@@ -59,7 +59,7 @@ export const DEFAULTS: FarmInputs = {
   mode: "new", budget: 15000000, species: "catfish", tankLitres: 3142,
   tankCount: 1, actualFlowLph: 0, biofilterPresent: false,
   aerationPresent: false, backupPresent: false,
-  fcr: 1.3, survival: .85, harvestKgEach: .3, salePriceKg: 15000,
+  fcr: 1.3, survival: .85, harvestKgEach: 1, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
 };
 
@@ -72,7 +72,7 @@ export const SANDS_TANK = {
   workingLitres: Math.round(Math.PI * 1 * 1 * 1 * 1000),
   tankCost: 1100000, pumpCost: 1500000, pumpFlowLph: 30000,
   filterCost: 600000, aerationCost: 350000, pipingInstallCost: 350000,
-  catfishStockPerTank: 500,
+  catfishHarvestTargetPerTank: 500,
 } as const;
 
 const clean = (n: number, fallback: number, lower: number, upper: number) =>
@@ -96,14 +96,15 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const effectiveVolume = Math.min(volumeLitres, effectiveFlow / 1.25);
   const harvestCapacity = effectiveVolume / 1000 * species.densityKgM3;
   const capacityHarvestCount = Math.max(0, Math.floor(harvestCapacity / weightKg));
-  // SANDS reports 500 catfish stocked per 2 m diameter tank (provisional 1 m water depth).
-  // Keep this stocking target distinct from harvested survivors, and enforce a separate
-  // biomass density screen if users select a heavier target harvest weight.
-  const screenStock = inputs.species === "catfish"
-    ? Math.floor(effectiveVolume / SANDS_TANK.workingLitres * SANDS_TANK.catfishStockPerTank)
-    : Math.floor(capacityHarvestCount / survival);
-  const fishStocked = Math.max(0, Math.min(screenStock, Math.floor(capacityHarvestCount / survival)));
-  const fishHarvested = Math.min(capacityHarvestCount, Math.floor(fishStocked * survival));
+  // SANDS requests 500 fish HARVESTED per standard tank, rather than 500 stocked.
+  // Reverse-calculate stocking to account for survival (500 / 0.85 -> 589).
+  // High-density catfish production is a CONDITIONAL design target, not a
+  // validation of the current 600k UGX filter or aeration package.
+  const requestedHarvestCount = inputs.species === "catfish"
+    ? Math.floor(effectiveVolume / SANDS_TANK.workingLitres * SANDS_TANK.catfishHarvestTargetPerTank)
+    : capacityHarvestCount;
+  const fishHarvested = Math.max(0, Math.min(capacityHarvestCount, requestedHarvestCount));
+  const fishStocked = Math.ceil(fishHarvested / survival);
   const harvestKg = fishHarvested * weightKg;
   const feedKg = Math.max(0, (harvestKg - fishStocked * .025) * fcr * 1.08);
   const peakFeedKgDay = harvestKg * .02;
@@ -149,7 +150,12 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
   if (!isExisting && count > 1) warnings.push("Shared 30,000 L/h pump allocation is preliminary: verify delivery at operating head and biological/mechanical filtration capacity.");
   warnings.push("Backup power UGX 1,200,000, operating wattage, support, testing, and contingency remain estimates rather than confirmed SANDS costs.");
-  warnings.push("500 catfish per SANDS tank and a 1.0 m working water depth are provisional planning inputs, not technical stocking clearance.");
+  if (inputs.species === "catfish") {
+    const density = harvestKg / Math.max(.001, volumeLitres / 1000);
+    if (density > 100) warnings.push("HIGH-INTENSITY DESIGN: " + Math.round(density) + " kg/m3 expected harvest biomass. This is a proposed output target only. SANDS must verify aeration/oxygen transfer, filtration TAN removal, solids, CO2 stripping, backup and water-quality monitoring. No stocking approval is implied.");
+    warnings.push("Catfish project targets 500 fish HARVESTED per standard working-volume tank, with extra fish stocked for mortality at the selected survival rate.");
+  }
+  warnings.push("1.0 m working water depth is provisional; confirm actual tank water level.");
   warnings.push("Fingerling starting weight (25 g), FCR, survival, cycle length, feed allowance and TAN factors still need confirmation.");
   if (isExisting && inputs.biofilterPresent) warnings.push("Existing biofilter performance has not been verified. Media, maturity and TAN-removal capacity need testing.");
   if (isExisting && inputs.backupPresent) warnings.push("Confirm backup power will run all critical equipment for the required outage duration.");
