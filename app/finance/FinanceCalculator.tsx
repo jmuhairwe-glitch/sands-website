@@ -61,6 +61,8 @@ export default function FinanceCalculator() {
     "Tank(s): " + result.tanks + " x " + quantity(inputs.tankLitres) + " L",
     "Estimated fingerlings: " + quantity(result.fishStocked),
     "Estimated feed: " + quantity(result.feedKg, 1) + " kg",
+    "Complete SANDS package price: " + ugx(result.packageCost),
+    "Starter feed included (estimated): " + quantity(result.includedStarterFeedKg, 1) + " kg",
     "Daily fresh water exchange: " + inputs.waterExchangePct + "% (" + quantity(result.dailyFreshWaterLitres) + " L/day)",
     "Estimated project cost: " + ugx(result.projectTotal),
     "Requested: on-site assessment and itemised quote.",
@@ -158,9 +160,10 @@ export default function FinanceCalculator() {
               <div className="financeField"><label htmlFor="powerTariff">Electricity (UGX/kWh)</label><Numeric id="powerTariff" value={inputs.electricityTariff} min={100} max={2500} step={50} onChange={(electricityTariff) => set({ electricityTariff })}/></div>
               <div className="financeField"><label htmlFor="pumpWatts">Shared pump electrical draw (W per pump)</label><Numeric id="pumpWatts" value={inputs.pumpWatts} min={50} max={10000} step={50} onChange={(pumpWatts) => set({ pumpWatts })}/><small>SANDS-reported rating: 300 W per pump, shared across up to six standard tanks. Not 300 W per tank.</small></div>
               <div className="financeField"><label htmlFor="aerationWatts">Aerator electrical draw (W per aerator; assumes one per tank)</label><Numeric id="aerationWatts" value={inputs.aerationWattsPerTank} min={0} max={3000} step={5} onChange={(aerationWattsPerTank) => set({ aerationWattsPerTank })}/><small>SANDS-reported aerator rating: 40 W. The calculator currently budgets one aerator per tank; confirm if the aeration units are shared between tanks.</small></div>
+              <div className="financeField"><label htmlFor="starterBag">Starter bag included with each new catfish tank (kg, assumed)</label><Numeric id="starterBag" value={inputs.starterBagKgPerTank} min={0} max={100} step={1} onChange={(starterBagKgPerTank) => set({ starterBagKgPerTank })}/><small>The package includes one bag per tank. Bag weight is NOT YET CONFIRMED; 25 kg is an editable example. Only this quantity is deducted from the additional feed purchased.</small></div>
               <div className="financeField"><label htmlFor="waterRate">Source water cost (UGX/1,000 L)</label><Numeric id="waterRate" value={inputs.waterCostPer1000L} min={0} max={100000} step={500} onChange={(waterCostPer1000L) => set({ waterCostPer1000L })}/><small>UGX 0 means not priced, NOT free. Enter a real water cost for the profitability estimate.</small></div>
             </div>
-            <p className="financeMuted">SANDS catfish feed/equipment costs and sales target were updated from supplied figures. Stocking is now reverse-calculated from the target HARVEST count to include mortality. Survival, starting weight, FCR, pump wattage, operating depth, and high-intensity filtration capacity still need confirmation. Fingerlings remain UGX 500/fish pending confirmation; feed is {ugx(profile.feedPriceKg)}/kg.</p>
+            <p className="financeMuted">SANDS new catfish package: one tank {ugx(SANDS_TANK.singleTankPackage)}; two or more {ugx(SANDS_TANK.multiTankPackagePerTank)} per tank, including initial fingerlings and one starter bag each. The 25 kg starter-bag size is only an example. Stocking covers mortality for the intended harvest. Survival, starter weight, FCR, working depth and safe filtration capacity need checking. Repeat-cycle fingerlings are provisionally valued at UGX 500/fish; feed is {ugx(profile.feedPriceKg)}/kg.</p>
           </details>
         </section>
 
@@ -181,15 +184,23 @@ export default function FinanceCalculator() {
 
           <div className="financePanel">
             <h3>Where the money goes</h3>
-            <div className="financeCost"><span>{isNew ? "Tanks, RAS, installation & backup" : "Provisional missing equipment upgrades"}</span><b>{ugx(result.infrastructure)}</b></div>
-            <div className="financeCost"><span>Fingerlings</span><b>{ugx(result.fingerlingsCost)}</b></div>
-            <div className="financeCost"><span>Feed for one cycle</span><b>{ugx(result.feedCost)}</b></div>
+            {result.isSandsPackage ? <>
+              <div className="financeCost"><span>SANDS inclusive RAS package{result.tanks === 1 ? " (single-tank rate)" : " (multi-tank rate)"}</span><b>{ugx(result.packageCost)}</b></div>
+              <div className="financeCost"><span>Fingerlings supplied in package</span><b>{quantity(result.includedFingerlings)} included · no extra charge</b></div>
+              <div className="financeCost"><span>Starter feed supplied in package</span><b>{quantity(result.includedStarterFeedKg, 1)} kg assumed · included</b></div>
+              <div className="financeCost"><span>Additional feed for first season ({quantity(result.additionalFeedKg, 1)} kg)</span><b>{ugx(result.feedCost)}</b></div>
+              <div className="financeCost"><span>Provisional additional backup power (NOT in package)</span><b>{ugx(result.backupAllowance)}</b></div>
+            </> : <>
+              <div className="financeCost"><span>{isNew ? "Provisional equipment and installation" : "Provisional missing equipment upgrades"}</span><b>{ugx(result.infrastructure)}</b></div>
+              <div className="financeCost"><span>Initial fingerlings</span><b>{ugx(result.fingerlingsCost)}</b></div>
+              <div className="financeCost"><span>First season feed</span><b>{ugx(result.feedCost)}</b></div>
+            </>}
             <div className="financeCost"><span>Estimated power</span><b>{ugx(result.energyCost)}</b></div>
             <div className="financeCost"><span>Support and training allowance</span><b>{ugx(result.supportCost)}</b></div>
             <div className="financeCost"><span>Water testing and supplies</span><b>{ugx(result.waterTestingCost)}</b></div>
             <div className="financeCost"><span>Fresh water supply, initial fill + exchange</span><b>{ugx(result.waterSupplyCost)}{inputs.waterCostPer1000L === 0 ? " (unpriced)" : ""}</b></div>
             <div className="financeCost"><span>10% contingency</span><b>{ugx(result.contingency)}</b></div>
-            {isNew && <p className="financeMuted">SANDS component prices PER TANK: tank {ugx(SANDS_TANK.tankCost)}, mechanical + biological filter {ugx(SANDS_TANK.filterCost)} (confirmed per tank), aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)}. <strong>{quantity(result.pumpUnits)} shared pump(s)</strong> are costed at {ugx(SANDS_TANK.pumpCost)} each, with one nominal 30,000 L/h pump for up to six standard tanks. Backup power {ugx(1200000)} is only a provisional allowance. The standard UGX 600,000 filtration package is NOT yet certified for a 500 kg/tank production target. Electricity uses SANDS-reported ratings of {quantity(inputs.pumpWatts)} W per shared water pump and {quantity(inputs.aerationWattsPerTank)} W per aerator, provisionally assuming one aerator per tank. Actual duty and safe oxygen-delivery capacity must be verified before promising payback figures.</p>}
+            {result.isSandsPackage && <p className="financeMuted">SANDS package prices: {ugx(SANDS_TANK.singleTankPackage)} for one tank, or {ugx(SANDS_TANK.multiTankPackagePerTank)} per tank for two or more. The package includes tanks, one shared 30,000 L/h pump for up to six tanks, mechanical/biological filtration valued at UGX 600,000 per tank, aeration, installation, mortality-adjusted fingerlings and one starter feed bag per tank. The starter bag is assumed {quantity(inputs.starterBagKgPerTank)} kg until confirmed. Backup power, electricity, extra feed, testing/support, water and contingency are listed separately. The technical suitability of 500 kg harvest per tank remains unverified.</p>}
             <div className="financeTotal"><span>Total estimated project</span><strong>{ugx(result.projectTotal)}</strong></div>
             <div className="financeMeter" aria-label="Percentage of your budget used"><span style={{ width: Math.min(100, budgetUsedPercent) + "%" }} /></div>
             <p className={result.amountRemaining < 0 ? "financeShortfall" : "financeMuted"}>
@@ -237,12 +248,13 @@ export default function FinanceCalculator() {
           <div className="financePanel">
             <h3>Investment recovery & payback</h3>
             <div className="financeMetrics">
-              <div><small>Initial capital to recover</small><strong>{ugx(investment.initialCapital)}</strong></div>
-              <div><small>Expected net cash / season</small><strong>{ugx(investment.cashSurplusPerCycle)}</strong></div>
+              <div><small>First-season total investment</small><strong>{ugx(investment.initialCapital)}</strong></div>
+              <div><small>Net after first-season harvest</small><strong>{ugx(investment.firstCycleCashResult)}</strong></div>
+              <div><small>Estimated net cash / repeat season</small><strong>{ugx(investment.cashSurplusPerCycle)}</strong></div>
               <div><small>Payback in full seasons</small><strong>{investment.paybackSeasons === null ? "No payback" : investment.paybackSeasons + " season(s)"}</strong></div>
               <div><small>Approximate elapsed time</small><strong>{investment.paybackMonths === null ? "Not recovered" : investment.paybackMonths + " months"}</strong></div>
             </div>
-            <p className="financeMuted">Payback counts complete {inputs.cycleDays}-day production cycles required to recover initial setup costs from estimated repeat-cycle net cash, including a 10% cost allowance. It excludes loan interest, tax, land, significant repairs and costs not priced here.</p>
+            <p className="financeMuted">Payback is the number of complete {inputs.cycleDays}-day production cycles until cumulative cash flow turns positive. The first season counts the inclusive package and only additional feed; later seasons must purchase new fingerlings and ALL feed. Includes a 10% allowance and excludes loan interest, tax, land, significant repairs and unpriced costs. Feed conversion and stocking density remain unverified.</p>
             <div className="financeScenarioTable">
               <div className="financeScenarioHeading"><span>Scenario</span><span>Net per season</span><span>Payback</span></div>
               {investment.scenarios.map(s => (
