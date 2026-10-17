@@ -50,24 +50,36 @@ export type FarmResult = {
 };
 
 export const SPECIES = {
-  catfish: { label: "African catfish", densityKgM3: 45, feedPriceKg: 3500, fingerlingPrice: 500, defaultFcr: 1.3, defaultHarvestKg: .8 },
-  tilapia: { label: "Tilapia", densityKgM3: 20, feedPriceKg: 2900, fingerlingPrice: 500, defaultFcr: 1.5, defaultHarvestKg: .6 },
+  catfish: { label: "African catfish", densityKgM3: 45, feedPriceKg: 3000, fingerlingPrice: 500, defaultFcr: 1.3, defaultHarvestKg: .3, defaultSalePriceKg: 15000 },
+  tilapia: { label: "Tilapia", densityKgM3: 20, feedPriceKg: 2900, fingerlingPrice: 500, defaultFcr: 1.5, defaultHarvestKg: .6, defaultSalePriceKg: 10000 },
 } as const;
 
 export const DEFAULTS: FarmInputs = {
-  mode: "new", budget: 15000000, species: "catfish", tankLitres: 2000,
-  tankCount: 1, actualFlowLph: 2500, biofilterPresent: false,
+  mode: "new", budget: 15000000, species: "catfish", tankLitres: 3142,
+  tankCount: 1, actualFlowLph: 0, biofilterPresent: false,
   aerationPresent: false, backupPresent: false,
-  fcr: 1.3, survival: .85, harvestKgEach: .8, salePriceKg: 10000,
+  fcr: 1.3, survival: .85, harvestKgEach: .3, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
 };
+
+// SANDS circular tank: 2 m diameter x 1.2 m physical height. Brimful: ~3,770 L.
+// Planning water depth is provisionally 1.0 m (~3,142 L) until SANDS confirms actual fill level.
+// A 30,000 L/h pump can potentially serve several tanks, subject to delivered head and treatment design.
+export const SANDS_TANK = {
+  diameterM: 2, wallHeightM: 1.2, assumedWaterDepthM: 1,
+  brimfulLitres: Math.round(Math.PI * 1 * 1 * 1.2 * 1000),
+  workingLitres: Math.round(Math.PI * 1 * 1 * 1 * 1000),
+  tankCost: 1100000, pumpCost: 1500000, pumpFlowLph: 30000,
+  filterCost: 600000, aerationCost: 350000, pipingInstallCost: 350000,
+  catfishStockPerTank: 500,
+} as const;
 
 const clean = (n: number, fallback: number, lower: number, upper: number) =>
   Number.isFinite(n) ? Math.min(upper, Math.max(lower, n)) : fallback;
 
 function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const species = SPECIES[inputs.species];
-  const litresPerTank = clean(inputs.tankLitres, 2000, 500, 100000);
+  const litresPerTank = clean(inputs.tankLitres, SANDS_TANK.workingLitres, 500, 100000);
   const count = Math.max(1, Math.min(100, Math.floor(tanks)));
   const volumeLitres = litresPerTank * count;
   const survival = clean(inputs.survival, .85, .5, .98);
@@ -82,8 +94,15 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   // balances must be checked by SANDS before any stocking recommendation.
   const effectiveVolume = Math.min(volumeLitres, effectiveFlow / 1.25);
   const harvestCapacity = effectiveVolume / 1000 * species.densityKgM3;
-  const fishHarvested = Math.max(0, Math.floor(harvestCapacity / weightKg));
-  const fishStocked = Math.max(0, Math.ceil(fishHarvested / survival));
+  const capacityHarvestCount = Math.max(0, Math.floor(harvestCapacity / weightKg));
+  // SANDS reports 500 catfish stocked per 2 m diameter tank (provisional 1 m water depth).
+  // Keep this stocking target distinct from harvested survivors, and enforce a separate
+  // biomass density screen if users select a heavier target harvest weight.
+  const screenStock = inputs.species === "catfish"
+    ? Math.floor(effectiveVolume / SANDS_TANK.workingLitres * SANDS_TANK.catfishStockPerTank)
+    : Math.floor(capacityHarvestCount / survival);
+  const fishStocked = Math.max(0, Math.min(screenStock, Math.floor(capacityHarvestCount / survival)));
+  const fishHarvested = Math.min(capacityHarvestCount, Math.floor(fishStocked * survival));
   const harvestKg = fishHarvested * weightKg;
   const feedKg = Math.max(0, (harvestKg - fishStocked * .025) * fcr * 1.08);
   const peakFeedKgDay = harvestKg * .02;
@@ -92,13 +111,23 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const tanGramsDay = peakFeedKgDay * 40;
   const oxygenKgDay = peakFeedKgDay * .6;
 
-  // Capital allowances are *not* supplier quotations. They include a shared
-  // plant and site set-up cost for new installs.
+  // Supplier-supplied component prices apply to the SANDS standard tank only.
+  // Until other tank sizes are quoted, scale component cost approximately by working volume.
+  // Pump is a shared unit, NOT automatically one pump per tank.
+  const relativeTankSize = litresPerTank / SANDS_TANK.workingLitres;
+  const standardUnitCost = SANDS_TANK.tankCost + SANDS_TANK.filterCost +
+    SANDS_TANK.aerationCost + SANDS_TANK.pipingInstallCost;
+  const pumpUnits = Math.max(1, Math.ceil(nominalPumpLph / SANDS_TANK.pumpFlowLph));
+  // UGX 1.2m is an UNCONFIRMED backup-power allowance, not supplied pricing.
+  const provisionalBackupAllowance = 1200000;
   const infrastructure = isExisting
-    ? (inputs.biofilterPresent ? 0 : 1500000 + count * 500000)
-      + (inputs.aerationPresent ? 0 : 350000 + count * 120000)
-      + (inputs.backupPresent ? 0 : 1200000)
-    : 3500000 + count * 2200000 + 1200000;
+    ? (inputs.biofilterPresent ? 0 : SANDS_TANK.filterCost * count * relativeTankSize)
+      + (inputs.aerationPresent ? 0 : SANDS_TANK.aerationCost * count * relativeTankSize)
+      + ((!inputs.biofilterPresent || !inputs.aerationPresent) ? SANDS_TANK.pipingInstallCost * count : 0)
+      + (inputs.backupPresent ? 0 : provisionalBackupAllowance)
+    : count * standardUnitCost * relativeTankSize
+      + pumpUnits * SANDS_TANK.pumpCost
+      + provisionalBackupAllowance;
 
   const fingerlingsCost = fishStocked * species.fingerlingPrice;
   const feedCost = feedKg * species.feedPriceKg;
@@ -116,6 +145,11 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const cycleOperatingMargin = projectedSales - runningCost;
   const warnings: string[] = [];
   if (isExisting && effectiveFlow < nominalPumpLph) warnings.push("Reported circulation is below the preliminary turnover screen; fish numbers have been reduced. Check pump head and actual flow.");
+  if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
+  if (!isExisting && count > 1) warnings.push("Shared 30,000 L/h pump allocation is preliminary: verify delivery at operating head and biological/mechanical filtration capacity.");
+  warnings.push("Backup power UGX 1,200,000, operating wattage, support, testing, and contingency remain estimates rather than confirmed SANDS costs.");
+  warnings.push("500 catfish per SANDS tank and a 1.0 m working water depth are provisional planning inputs, not technical stocking clearance.");
+  warnings.push("Fingerling starting weight (25 g), FCR, survival, cycle length, feed allowance and TAN factors still need confirmation.");
   if (isExisting && inputs.biofilterPresent) warnings.push("Existing biofilter performance has not been verified. Media, maturity and TAN-removal capacity need testing.");
   if (isExisting && inputs.backupPresent) warnings.push("Confirm backup power will run all critical equipment for the required outage duration.");
   if (cycleOperatingMargin <= 0) warnings.push("Estimated fish sales do not cover modeled running costs. Review the economics before borrowing.");
