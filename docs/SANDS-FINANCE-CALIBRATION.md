@@ -11,7 +11,7 @@
 | Provisional working water depth | 1.0 m | **To confirm**; implies 3,142 L working volume |
 | Tank component cost | UGX 1,100,000 | SANDS; internal cost reference, **not an extra charge on the package** |
 | One shared pump price | UGX 1,500,000 | SANDS |
-| Pump nominal/delivered flow reported | 30,000 L/hour | SANDS; confirm at filter/manifold head |
+| Updated shared pump nominal flow | **50,000 L/hour** | SANDS revision; must confirm at operating filter/manifold head |
 | Pumps needed | One per **up to six** standard tanks | SANDS layout; confirm duty |
 | Mechanical/biological filtration allowance | UGX 600,000 **per tank** | Confirmed by SANDS; **not proof of 500 kg/tank capability** |
 | Aeration equipment allowance | UGX 350,000 | SANDS; assumed per tank until confirmed |
@@ -27,7 +27,7 @@
 | Production cycle | 180 days | **Unconfirmed**, retained |
 | Feed budget cushion | 8% | **Unconfirmed**, retained |
 | Energy tariff | UGX 850/kWh | **Unconfirmed**, retained |
-| Pump electric draw | 300 W per shared pump | **SANDS-reported rating**; verify actual draw at operating head |
+| Updated pump electric input | **500 W per shared pump** | SANDS revision, same UGX 1.5m price; verify power/flow at actual operating head |
 | Aeration electric draw | **40 W per aerator** | SANDS-reported; **one aerator per tank assumed until grouping confirmed** |
 | Backup power | UGX 1,200,000/install | **Unconfirmed** allowance |
 | Training/support | UGX 400,000 + 180,000 per tank/cycle | **Unconfirmed** allowance |
@@ -45,7 +45,7 @@ SANDS package price for a NEW standard catfish system:
 - Starter bag weight has NOT been provided. Set an **editable 25 kg/tank example**, explicitly labelled unconfirmed, and subtract its assumed weight from the first-cycle purchased feed. **Do not bill it twice.** Customer should not be shown this as a confirmed included quantity.
 - First-season extra feed costs **UGX 2,500/kg**; in later seasons the farmer must purchase new fingerlings and **all** feed. Repeat-cycle fingerling unit price UGX 500 is still unconfirmed.
 - Additional backup power **UGX 1,200,000** is provisionally costed separately as NOT INCLUDED because the package inclusions did not explicitly mention backup power. Verify this with SANDS before issuing quotes.
-- SANDS has stated 1x 30,000 L/hour, 300 W pump can serve up to six tanks. For more than six tanks, obtain an itemised quote for extra pumping/filtration rather than assume the retail package covers scaling indefinitely.
+- SANDS now offers 1x 50,000 L/hour, 500 W pump (same price as older 30,000 L/h, 300 W unit), intended to serve up to six tanks. For more than six tanks, obtain an itemised quote for extra pumping/filtration rather than assume the retail package covers scaling indefinitely.
 - The old tank/pump/filter/aerator/piping component numbers are NOT added on top of the confirmed selling package. They may be kept for internal margin analysis only.
 
 Payback now uses cumulative actual cash flows: first cycle incurs inclusive package + separately priced first-season operating inputs; subsequent seasons incur new fingerlings and full feed (and electricity, tests, support, water). Recovery occurs in the first full cycle where accumulated harvest receipts exceed accumulated outlays, excluding loan interest and unpriced costs.
@@ -56,9 +56,9 @@ Payback now uses cumulative actual cash flows: first cycle incurs inclusive pack
 
 SANDS uses a shared pump with flow controlled through a manifold. Tank inlets receive the specified share; nominal leftover water is returned through an aerating/final filtration stage. This return is **not** proof of oxygenation or filtration and cannot short-circuit solids removal/biofilter treatment.
 
-Preliminary per-tank flow = 3,142 L x 1.25 turnovers/hour = about **3,928 L/h**; six tanks together = **23,565 L/h**, leaving **6,435 L/h** of nominal 30,000 L/h capacity for the return route. These figures presume the full 30,000 L/h is delivered at actual installed head; verify pump curve, pipe resistance, filter head and actual water delivery.
+For six STANDARD ~3,142 L tanks, preliminary demand = **23,565 L/h**, leaving 26,435 L/h nominal for bypass from the 50,000 L/h pump. For six UPGRADED 5,000 L tanks, demand = **37,500 L/h**, leaving **12,500 L/h** nominal bypass at 1.25 turnovers/hour. These are ideal nameplate-flow balances only. Verify pump curve, head loss, pipe manifold/filter pressure, bypass route, and real delivered flow. Six tanks is the present SANDS shared-pumping layout limit; this is not proof of adequate biological filtration or oxygenation.
 
-One pump is priced per six standard tanks, and a second pump is added at the seventh tank. Bigger/nonstandard tank volumes may need an extra pump sooner if the required flow exceeds 30,000 L/h.
+One pump is priced per up to six tanks, including 5,000 L proposed tanks if actual duty proves sufficient. Add an additional pump at the seventh tank or sooner if measured demand exceeds real flow under installed conditions.
 
 ## Makeup water and daily exchange
 
@@ -93,3 +93,12 @@ If the 40 W aerator serves multiple tanks, the totals should be reduced accordin
 6. Water source cost per 1,000 L, whether borehole/piped/rainwater, delivery pressure or pumping loads, effluent handling, transport, labour, feed distribution, repairs, permits, harvest handling, mortalities, buyer deductions and realized farm-gate selling price.
 
 No bank, investor, or customer should interpret the model as a certified RAS design or guaranteed returns.
+
+## Proposed 5,000-L working-volume tank (new SANDS owner update)
+
+- Raise the working volume from roughly 3,142 L to **5,000 L** using **one additional iron sheet** to increase circumference. Existing smaller tank uses a **four-pallet** base; the larger base needs additional pallets, quantity and price **not yet specified**. Confirm structural loading, support spacing, flat floor, water depth and final geometric dimensions.
+- **Do NOT** replace the standard retail package price with an invented new one. The upgraded inclusive tank package is priced as standard UGX 5m single-tank OR UGX 3.5m/tank multi-tank **PLUS incremental additional iron sheet, pallets and fabrication work per tank**, entered in `upgradedTankExtraCostPerTank`. This starts as **zero meaning UNQUOTED** and must be labeled a MINIMUM, not a final lender-ready budget. The pump is already included and its UGX 1.5m acquisition cost is not charged again.
+- Target for new 5,000 L option remains **500 fish harvested at 1 kg = 500 kg per tank**, or **100 kg/m³**. At provisional 85% survival, stock 589 fingerlings per tank (included under the tentative bundle interpretation). This high biomass requires pilot verification of DO, oxygen transfer, CO2, solids, biofilter TAN, water-source quality and backup.
+- 20% daily NEW water exchange = **1,000 L/day per 5,000 L tank**; six tanks need **6,000 L/day**, in addition to internal recirculation. At 180 days six tanks use 1,080,000 L exchange water, plus first tank fills of 30,000 L.
+- New nominal shared pump spec = **50,000 L/h, 500 W, UGX 1,500,000**; no additional hardware cost compared with former 30,000 L/h, 300 W pump. Pump-only electricity at 500 W continuous x 180 days x UGX 850/kWh = **UGX 1,836,000** (up from UGX 1,101,600). With six 40 W aerators, 740 W total = **UGX 2,717,280** over 180 days (formerly UGX 1,982,880).
+- A 500 W pump claiming 50,000 L/h is only meaningful with its rated hydraulic head and pump curve. Confirm actual flow/head at filtration working pressure, not its nominal free-flow number.
