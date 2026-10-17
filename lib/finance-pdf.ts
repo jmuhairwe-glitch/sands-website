@@ -16,10 +16,10 @@ const PAGE_H = 842;
 const M = 47;
 
 function printable(input: string) {
-  return String(input).normalize("NFKD").replace(/[^\\x20-\\x7e]/g, " ").replace(/\\s+/g, " ").trim();
+  return String(input).normalize("NFKD").replace(/[^\x20-\x7e]/g, " ").replace(/\s+/g, " ").trim();
 }
 function pdfEscape(text: string) {
-  return printable(text).replace(/\\\\/g, "\\\\\\\\").replace(/\\(/g, "\\\\(").replace(/\\)/g, "\\\\)");
+  return printable(text).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 function wrap(text: string, maxChars: number) {
   const words = printable(text).split(" ");
