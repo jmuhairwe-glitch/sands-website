@@ -30,7 +30,9 @@ export type InvestmentAnalysis = {
 
 function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
   const species = SPECIES[inputs.species];
-  const capital = result.infrastructure * 1.1;
+  // Initial installation and fresh fill are first-cycle only. Exchange water
+  // is recurring and should reduce each season's operating cash surplus.
+  const capital = (result.infrastructure + result.initialFillWaterCost) * 1.1;
   const definitions = [
     { label: "Conservative", survivalFactor: .87, fcrFactor: 1.15, priceFactor: .9 },
     { label: "Expected", survivalFactor: 1, fcrFactor: 1, priceFactor: 1 },
@@ -50,7 +52,7 @@ function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
     const harvestKg = fishSold * inputs.harvestKgEach;
     const feedKg = Math.max(0, (harvestKg - result.fishStocked * .025) * fcr * 1.08);
     const running = result.fingerlingsCost + feedKg * species.feedPriceKg +
-      result.energyCost + result.supportCost + result.waterTestingCost;
+      result.energyCost + result.supportCost + result.waterTestingCost + result.waterExchangeCost;
     const recurringOutlay = running * 1.1;
     const sales = harvestKg * priceKg;
     const cashSurplus = sales - recurringOutlay;
@@ -68,7 +70,7 @@ export function evaluateInvestment(inputs: FarmInputs, result: FarmResult): Inve
   const alternatives = scenarios(inputs, result);
   const base = alternatives[1];
   return {
-    initialCapital: result.infrastructure * 1.1,
+    initialCapital: (result.infrastructure + result.initialFillWaterCost) * 1.1,
     recurringCycleOutlay: base.recurringOutlay,
     cashSurplusPerCycle: base.cashSurplus,
     paybackSeasons: base.paybackSeasons,
