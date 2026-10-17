@@ -59,6 +59,7 @@ export default function FinanceCalculator() {
     "Species: " + profile.label,
     "Budget: " + ugx(inputs.budget),
     "Tank(s): " + result.tanks + " x " + quantity(inputs.tankLitres) + " L",
+    ...(result.upgradedTank ? ["Upgrade price: " + (result.upgradePricingPending ? "NOT YET QUOTED" : ugx(result.upgradedTankExtraCost))] : []),
     "Estimated fingerlings: " + quantity(result.fishStocked),
     "Estimated feed: " + quantity(result.feedKg, 1) + " kg",
     "Complete SANDS package price: " + ugx(result.packageCost),
@@ -122,9 +123,17 @@ export default function FinanceCalculator() {
           </div>
           {isNew ? (
             <div className="financeField">
-              <label>SANDS standard circular tank</label>
-              <p><strong>{SANDS_TANK.diameterM} m diameter × {SANDS_TANK.wallHeightM} m high</strong> — about {quantity(SANDS_TANK.brimfulLitres)} L at the rim; this estimate uses <strong>{quantity(SANDS_TANK.workingLitres)} L</strong> at a provisional {SANDS_TANK.assumedWaterDepthM.toFixed(1)} m operating depth.</p>
-              <small>Current tank equipment pricing applies to this standard tank. We must verify actual operating water depth and the complete filtration design before quoting.</small>
+              <label htmlFor="newTankSize">SANDS circular tank option</label>
+              <select id="newTankSize" value={inputs.tankLitres} onChange={e => set({ tankLitres: Number(e.target.value) })}>
+                <option value={SANDS_TANK.workingLitres}>Existing SANDS: approximately 3,142 L working water</option>
+                <option value={SANDS_TANK.upgradedWorkingLitres}>Proposed larger tank: 5,000 L working water</option>
+              </select>
+              {inputs.tankLitres === SANDS_TANK.upgradedWorkingLitres ? (
+                <p>The proposed 5,000 L option uses one additional iron sheet and more pallet-supported base material than the standard four-pallet tank. <strong>Only the incremental sheet, pallets and fabrication labour are to be added</strong> to the existing complete-package rate. The exact materials quotation is still required.</p>
+              ) : (
+                <p><strong>{SANDS_TANK.diameterM} m diameter × {SANDS_TANK.wallHeightM} m high</strong> — about {quantity(SANDS_TANK.brimfulLitres)} L at the rim; this model uses <strong>{quantity(SANDS_TANK.workingLitres)} L</strong> at a provisional {SANDS_TANK.assumedWaterDepthM.toFixed(1)} m water depth.</p>
+              )}
+              <small>At 5,000 L working capacity, 500 kg of harvested catfish equals 100 kg/m³. Exact upgraded-tank dimensions, base support and oxygen/filtration capacities require confirmation.</small>
             </div>
           ) : (
             <>
@@ -158,8 +167,9 @@ export default function FinanceCalculator() {
               <div className="financeField"><label htmlFor="salePrice">Selling price (UGX/kg)</label><Numeric id="salePrice" value={inputs.salePriceKg} min={1000} max={50000} step={500} onChange={(salePriceKg) => set({ salePriceKg })}/></div>
               <div className="financeField"><label htmlFor="cycleDays">Cycle length (days)</label><Numeric id="cycleDays" value={inputs.cycleDays} min={90} max={365} step={10} onChange={(cycleDays) => set({ cycleDays })}/></div>
               <div className="financeField"><label htmlFor="powerTariff">Electricity (UGX/kWh)</label><Numeric id="powerTariff" value={inputs.electricityTariff} min={100} max={2500} step={50} onChange={(electricityTariff) => set({ electricityTariff })}/></div>
-              <div className="financeField"><label htmlFor="pumpWatts">Shared pump electrical draw (W per pump)</label><Numeric id="pumpWatts" value={inputs.pumpWatts} min={50} max={10000} step={50} onChange={(pumpWatts) => set({ pumpWatts })}/><small>SANDS-reported rating: 300 W per pump, shared across up to six standard tanks. Not 300 W per tank.</small></div>
+              <div className="financeField"><label htmlFor="pumpWatts">Shared pump electrical draw (W per pump)</label><Numeric id="pumpWatts" value={inputs.pumpWatts} min={50} max={10000} step={50} onChange={(pumpWatts) => set({ pumpWatts })}/><small>SANDS-reported alternative: 50,000 L/hour at 500 W, same UGX 1.5m price. One shared pump for up to six tanks pending actual flow at operating head.</small></div>
               <div className="financeField"><label htmlFor="aerationWatts">Aerator electrical draw (W per aerator; assumes one per tank)</label><Numeric id="aerationWatts" value={inputs.aerationWattsPerTank} min={0} max={3000} step={5} onChange={(aerationWattsPerTank) => set({ aerationWattsPerTank })}/><small>SANDS-reported aerator rating: 40 W. The calculator currently budgets one aerator per tank; confirm if the aeration units are shared between tanks.</small></div>
+              {isNew && inputs.tankLitres === SANDS_TANK.upgradedWorkingLitres && <div className="financeField"><label htmlFor="upgradeExtraCost">Extra sheet + extra pallets + extra fabrication labour (UGX PER 5,000 L tank)</label><Numeric id="upgradeExtraCost" value={inputs.upgradedTankExtraCostPerTank} min={0} max={10000000} step={50000} onChange={(upgradedTankExtraCostPerTank) => set({ upgradedTankExtraCostPerTank })}/><small>Enter the quoted additional materials/labour cost ABOVE the original complete 3,142 L package. UGX 0 means UNPRICED, not a free upgrade. Current base uses four pallets; extra pallet count/price are awaiting SANDS confirmation.</small></div>}
               <div className="financeField"><label htmlFor="starterBag">Starter bag included with each new catfish tank (kg, assumed)</label><Numeric id="starterBag" value={inputs.starterBagKgPerTank} min={0} max={100} step={1} onChange={(starterBagKgPerTank) => set({ starterBagKgPerTank })}/><small>The package includes one bag per tank. Bag weight is NOT YET CONFIRMED; 25 kg is an editable example. Only this quantity is deducted from the additional feed purchased.</small></div>
               <div className="financeField"><label htmlFor="seasonOtherCost">Other running costs per season (UGX)</label><Numeric id="seasonOtherCost" value={inputs.otherSeasonCost} min={0} max={100000000} step={100000} onChange={(otherSeasonCost) => set({ otherSeasonCost })}/><small>Add labour, harvesting, delivery, marketing, repairs and other costs not already covered by the training/testing allowances. Zero means these expenses are UNPRICED, not that they don't exist. They are deducted from every season, including the first.</small></div>
               <div className="financeField"><label htmlFor="waterRate">Source water cost (UGX/1,000 L)</label><Numeric id="waterRate" value={inputs.waterCostPer1000L} min={0} max={100000} step={500} onChange={(waterCostPer1000L) => set({ waterCostPer1000L })}/><small>UGX 0 means not priced, NOT free. Enter a real water cost for the profitability estimate.</small></div>
@@ -181,12 +191,13 @@ export default function FinanceCalculator() {
             <div><small>Full-cycle feed</small><strong>{quantity(result.feedKg, 1)} kg</strong><span>FCR {inputs.fcr} plus 8% buffer</span></div>
           </div>
 
-          {inputs.species === "catfish" && result.harvestKg / Math.max(0.001, result.volumeLitres / 1000) > 100 && <div className="financeCautions"><strong>High-intensity production target — engineering review required</strong><p>{quantity(result.fishHarvested)} harvest fish × {inputs.harvestKgEach} kg means {quantity(result.harvestKg, 1)} kg across {quantity(result.volumeLitres)} working litres ({quantity(result.harvestKg / (result.volumeLitres / 1000), 1)} kg/m³). This target is NOT approval to stock. A SANDS site assessment must verify oxygen transfer, pump duty, biofilter ammonia-removal capacity, solids/CO₂ removal, backup power and water quality before a financing proposal can become a final quotation.</p></div>}
+          {inputs.species === "catfish" && result.harvestKg / Math.max(0.001, result.volumeLitres / 1000) >= 90 && <div className="financeCautions"><strong>High-intensity production target — engineering review required</strong><p>{quantity(result.fishHarvested)} harvest fish × {inputs.harvestKgEach} kg means {quantity(result.harvestKg, 1)} kg across {quantity(result.volumeLitres)} working litres ({quantity(result.harvestKg / (result.volumeLitres / 1000), 1)} kg/m³). This target is NOT approval to stock. A SANDS site assessment must verify oxygen transfer, pump duty, biofilter ammonia-removal capacity, solids/CO₂ removal, backup power and water quality before a financing proposal can become a final quotation.</p></div>}
 
           <div className="financePanel">
             <h3>Where the money goes</h3>
             {result.isSandsPackage ? <>
-              <div className="financeCost"><span>SANDS inclusive RAS package{result.tanks === 1 ? " (single-tank rate)" : " (multi-tank rate)"}</span><b>{ugx(result.packageCost)}</b></div>
+              <div className="financeCost"><span>SANDS inclusive RAS package{result.tanks === 1 ? " (single-tank rate)" : " (multi-tank rate)"}</span><b>{ugx(result.packageCost)}{result.upgradePricingPending ? " (MINIMUM)" : ""}</b></div>
+              {result.upgradedTank && <div className="financeCost"><span>Extra sheet, pallets and fabrication ({quantity(result.tanks)} tanks)</span><b>{result.upgradePricingPending ? "NOT QUOTED" : ugx(result.upgradedTankExtraCost)}</b></div> }
               <div className="financeCost"><span>Fingerlings supplied in package</span><b>{quantity(result.includedFingerlings)} included · no extra charge</b></div>
               <div className="financeCost"><span>Starter feed supplied in package</span><b>{quantity(result.includedStarterFeedKg, 1)} kg assumed · included</b></div>
               <div className="financeCost"><span>Additional feed for first season ({quantity(result.additionalFeedKg, 1)} kg)</span><b>{ugx(result.feedCost)}</b></div>
@@ -202,8 +213,8 @@ export default function FinanceCalculator() {
             <div className="financeCost"><span>Fresh water supply, initial fill + exchange</span><b>{ugx(result.waterSupplyCost)}{inputs.waterCostPer1000L === 0 ? " (unpriced)" : ""}</b></div>
             <div className="financeCost"><span>Other per-season operating expenses</span><b>{ugx(result.otherSeasonCost)}{inputs.otherSeasonCost === 0 ? " (unpriced)" : ""}</b></div>
             <div className="financeCost"><span>10% contingency</span><b>{ugx(result.contingency)}</b></div>
-            {result.isSandsPackage && <p className="financeMuted">SANDS package prices: {ugx(SANDS_TANK.singleTankPackage)} for one tank, or {ugx(SANDS_TANK.multiTankPackagePerTank)} per tank for two or more. The package includes tanks, one shared 30,000 L/h pump for up to six tanks, mechanical/biological filtration valued at UGX 600,000 per tank, aeration, installation, mortality-adjusted fingerlings and one starter feed bag per tank. The starter bag is assumed {quantity(inputs.starterBagKgPerTank)} kg until confirmed. Backup power, electricity, extra feed, testing/support, water and contingency are listed separately. The technical suitability of 500 kg harvest per tank remains unverified.</p>}
-            <div className="financeTotal"><span>Total estimated project</span><strong>{ugx(result.projectTotal)}</strong></div>
+            {result.isSandsPackage && <p className="financeMuted">SANDS package prices: {ugx(SANDS_TANK.singleTankPackage)} for one tank, or {ugx(SANDS_TANK.multiTankPackagePerTank)} per tank for two or more. The package includes tanks, one shared 50,000 L/h, 500 W pump for up to six tanks, mechanical/biological filtration valued at UGX 600,000 per tank, aeration, installation, mortality-adjusted fingerlings and one starter feed bag per tank. The starter bag is assumed {quantity(inputs.starterBagKgPerTank)} kg until confirmed. Backup power, electricity, extra feed, testing/support, water and contingency are listed separately. For 5,000 L tanks, the calculated package total includes ONLY a quoted extra materials charge if supplied; until then it is a minimum, NOT a complete price. The technical suitability of 500 kg harvest per tank remains unverified.</p>}
+            <div className="financeTotal"><span>{result.upgradePricingPending ? "MINIMUM estimated project (larger tank fabrication unpriced)" : "Total estimated project"}</span><strong>{ugx(result.projectTotal)}</strong></div>
             <div className="financeMeter" aria-label="Percentage of your budget used"><span style={{ width: Math.min(100, budgetUsedPercent) + "%" }} /></div>
             <p className={result.amountRemaining < 0 ? "financeShortfall" : "financeMuted"}>
               {result.amountRemaining >= 0 ? "Estimated unallocated budget: " + ugx(result.amountRemaining) : "Estimated extra budget required: " + ugx(-result.amountRemaining)}
@@ -223,7 +234,7 @@ export default function FinanceCalculator() {
               <div><small>Allocated to each tank</small><strong>{quantity(result.flowPerTankLph)} L/h</strong></div>
               <div><small>Nominal bypass / aerating return</small><strong>{quantity(result.provisionalBypassFlowLph)} L/h</strong></div>
             </div>}
-            <p className="financeMuted">One 30,000 L/h pump is shared between up to six SANDS standard tanks. Water goes through a distribution manifold; excess nominal capacity may recirculate via the final filtration/aeration stage. The bypass must not short-circuit waste treatment, and does not itself certify oxygen delivery. All flow figures require measurement at operating head. Planning factors: 2% peak-day feeding rate, 40 g TAN/kg feed, 0.6 kg O₂/kg feed, and a 1.25× tank-volume/hour circulation screen. SANDS must size the solids filter, biofilter media, oxygenation, CO₂ removal and backup power for the actual site.</p>
+            <p className="financeMuted">One 50,000 L/h, 500 W pump is shared between up to six SANDS tanks at the same UGX 1.5m equipment price. Water goes through a distribution manifold; excess nominal capacity may recirculate via the final filtration/aeration stage. The bypass must not short-circuit waste treatment, and does not itself certify oxygen delivery. All flow figures require measurement at operating head. Planning factors: 2% peak-day feeding rate, 40 g TAN/kg feed, 0.6 kg O₂/kg feed, and a 1.25× tank-volume/hour circulation screen. SANDS must size the solids filter, biofilter media, oxygenation, CO₂ removal and backup power for the actual site.</p>
           </div>
 
           <div className="financePanel">
@@ -245,7 +256,7 @@ export default function FinanceCalculator() {
             <div className="financeCost"><span>Harvest sales (estimated)</span><b>{ugx(result.projectedSales)}</b></div>
             <div className="financeCost"><span>Less: full first-season investment INCLUDING tanks and installation</span><b>− {ugx(investment.initialCapital)}</b></div>
             <div className="financeTotal"><span>{investment.firstCycleCashResult >= 0 ? "Cash left after recovering all modeled startup costs" : "Unrecovered investment after first harvest"}</span><strong className={investment.firstCycleCashResult < 0 ? "financeNegative" : ""}>{ugx(investment.firstCycleCashResult)}</strong></div>
-            <p className="financeMuted">A negative amount means the farmer has NOT recovered the startup investment. A positive amount means modeled first-season cash receipts exceed ALL entered costs, not that SANDS guarantees profit. Actual water-source expense, labour, transport, harvesting and engineering compliance costs must still be verified and entered where not already included. Loan financing costs are not yet modeled.</p>
+            <p className="financeMuted">{result.upgradePricingPending ? "The proposed larger tank's extra sheet, pallet and fabrication expenses have NOT been priced, so this projected net cash is an optimistic lower-cost example, NOT a financing-ready result. " : ""}A negative amount means the farmer has NOT recovered the startup investment. A positive amount means modeled first-season cash receipts exceed ALL entered costs, not that SANDS guarantees profit. Actual water-source expense, labour, transport, harvesting and engineering compliance costs must still be verified and entered where not already included. Loan financing costs are not yet modeled.</p>
           </div>
 
           <div className="financePanel">
