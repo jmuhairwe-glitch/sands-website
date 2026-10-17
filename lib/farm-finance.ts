@@ -36,6 +36,10 @@ export type FarmResult = {
   tanGramsDay: number;
   oxygenKgDay: number;
   nominalPumpLph: number;
+  pumpUnits: number;
+  nominalInstalledFlowLph: number;
+  provisionalBypassFlowLph: number;
+  flowPerTankLph: number;
   infrastructure: number;
   fingerlingsCost: number;
   feedCost: number;
@@ -74,6 +78,7 @@ export const SANDS_TANK = {
   brimfulLitres: Math.round(Math.PI * 1 * 1 * 1.2 * 1000),
   workingLitres: Math.round(Math.PI * 1 * 1 * 1 * 1000),
   tankCost: 1100000, pumpCost: 1500000, pumpFlowLph: 30000,
+  tanksPerPump: 6, targetTurnoversPerHour: 1.25,
   filterCost: 600000, aerationCost: 350000, pipingInstallCost: 350000,
   catfishHarvestTargetPerTank: 500,
 } as const;
@@ -90,13 +95,13 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const weightKg = clean(inputs.harvestKgEach, .3, .3, 2.0);
   const fcr = clean(inputs.fcr, 1.3, 1, 2.8);
   const days = clean(inputs.cycleDays, 180, 90, 365);
-  const nominalPumpLph = Math.ceil(volumeLitres * 1.25);
+  const nominalPumpLph = Math.ceil(volumeLitres * SANDS_TANK.targetTurnoversPerHour);
   const isExisting = inputs.mode === "existing";
   const effectiveFlow = isExisting ? Math.max(0, inputs.actualFlowLph) : nominalPumpLph;
   // Existing-tank estimates are capped by pump-flow screening as well as culture volume.
   // The 1.25 turnovers/hour is only a planning screen; oxygen, CO2 and TAN
   // balances must be checked by SANDS before any stocking recommendation.
-  const effectiveVolume = Math.min(volumeLitres, effectiveFlow / 1.25);
+  const effectiveVolume = Math.min(volumeLitres, effectiveFlow / SANDS_TANK.targetTurnoversPerHour);
   const harvestCapacity = effectiveVolume / 1000 * species.densityKgM3;
   const capacityHarvestCount = Math.max(0, Math.floor(harvestCapacity / weightKg));
   // SANDS requests 500 fish HARVESTED per standard tank, rather than 500 stocked.
@@ -122,7 +127,17 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const relativeTankSize = litresPerTank / SANDS_TANK.workingLitres;
   const standardUnitCost = SANDS_TANK.tankCost + SANDS_TANK.filterCost +
     SANDS_TANK.aerationCost + SANDS_TANK.pipingInstallCost;
-  const pumpUnits = Math.max(1, Math.ceil(nominalPumpLph / SANDS_TANK.pumpFlowLph));
+  // SANDS shares ONE 30,000 L/hour pump across up to SIX standard tanks.
+  // Add a pump only at the seventh standard tank, or sooner if larger tanks
+  // make the preliminary 1.25-turnover/h allocation exceed rated capacity.
+  // Rated hydraulic flow is not the verified delivered flow at operating head.
+  const pumpUnits = Math.max(1,
+    Math.ceil(count / SANDS_TANK.tanksPerPump),
+    Math.ceil(nominalPumpLph / SANDS_TANK.pumpFlowLph)
+  );
+  const nominalInstalledFlowLph = isExisting ? Math.max(0, inputs.actualFlowLph) : pumpUnits * SANDS_TANK.pumpFlowLph;
+  const provisionalBypassFlowLph = Math.max(0, nominalInstalledFlowLph - nominalPumpLph);
+  const flowPerTankLph = nominalPumpLph / count;
   // UGX 1.2m is an UNCONFIRMED backup-power allowance, not supplied pricing.
   const provisionalBackupAllowance = 1200000;
   const infrastructure = isExisting
@@ -154,7 +169,8 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const warnings: string[] = [];
   if (isExisting && effectiveFlow < nominalPumpLph) warnings.push("Reported circulation is below the preliminary turnover screen; fish numbers have been reduced. Check pump head and actual flow.");
   if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
-  if (!isExisting && count > 1) warnings.push("Shared 30,000 L/h pump allocation is preliminary: verify delivery at operating head and biological/mechanical filtration capacity.");
+  if (!isExisting) warnings.push("One nominal 30,000 L/h pump is costed for up to six standard tanks. Its actual delivered flow at installed head, valve allocation, bypass route and power draw must be confirmed.");
+  if (!isExisting && provisionalBypassFlowLph > 0) warnings.push("Nominal flow not directed to grow-out tanks (" + Math.round(provisionalBypassFlowLph).toLocaleString("en-UG") + " L/h) is assumed routed to the aerating/filter return. This bypass is not guaranteed additional dissolved oxygen and must not short-circuit treatment.");
   warnings.push("Backup power UGX 1,200,000, pump/aeration W, support, testing and contingency remain estimates, not confirmed SANDS costs. 30,000 L/h pump flow does not tell us electric power.");
   if (inputs.species === "catfish") {
     const density = harvestKg / Math.max(.001, volumeLitres / 1000);
@@ -172,6 +188,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     feasible: fishStocked > 0 && (!isExisting || projectTotal <= budget),
     tanks: count, volumeLitres, fishStocked, fishHarvested, harvestKg,
     feedKg, peakFeedKgDay, tanGramsDay, oxygenKgDay, nominalPumpLph,
+    pumpUnits, nominalInstalledFlowLph, provisionalBypassFlowLph, flowPerTankLph,
     infrastructure, fingerlingsCost, feedCost, energyCost, supportCost,
     waterTestingCost, runningCost, contingency, projectTotal,
     amountRemaining: budget - projectTotal, projectedSales, cycleOperatingMargin,
