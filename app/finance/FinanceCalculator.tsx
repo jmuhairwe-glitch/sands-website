@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { DEFAULTS, SPECIES, simulateFarm, ugx, quantity, type FarmInputs, type Species } from "../../lib/farm-finance";
+import { evaluateInvestment } from "../../lib/farm-investment";
 
 const moneyNumber = (n: number) => Number.isFinite(n) ? Math.round(n) : 0;
 const Numeric = ({ value, min = 0, max = 999999, step = 1, onChange, id }: {
@@ -11,8 +12,45 @@ const Numeric = ({ value, min = 0, max = 999999, step = 1, onChange, id }: {
 
 export default function FinanceCalculator() {
   const [inputs, setInputs] = useState<FarmInputs>(DEFAULTS);
+  const [applicant, setApplicant] = useState({
+    name: "", projectName: "", location: "", contact: "", financier: "", notes: "", contribution: 0,
+  });
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [proposalError, setProposalError] = useState("");
   const set = (update: Partial<FarmInputs>) => setInputs(current => ({ ...current, ...update }));
+  const setApplicantField = (field: keyof typeof applicant, value: string | number) =>
+    setApplicant(current => ({ ...current, [field]: value }));
   const result = useMemo(() => simulateFarm(inputs), [inputs]);
+  const investment = useMemo(() => evaluateInvestment(inputs, result), [inputs, result]);
+  async function downloadProposal() {
+    setProposalError("");
+    setIsDownloading(true);
+    try {
+      const response = await fetch("/api/finance-proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inputs, applicant }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || "The proposal could not be generated.");
+      }
+      const pdfBlob = await response.blob();
+      if (pdfBlob.type !== "application/pdf") throw new Error("Unexpected document response.");
+      const url = URL.createObjectURL(pdfBlob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "SANDS-Fish-Farm-Funding-Proposal.pdf";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      setProposalError(error instanceof Error ? error.message : "Could not download proposal.");
+    } finally {
+      setIsDownloading(false);
+    }
+  }
   const isNew = inputs.mode === "new";
   const profile = SPECIES[inputs.species];
   const request = [
@@ -169,9 +207,79 @@ export default function FinanceCalculator() {
             <p className="financeMuted">Before installation cost recovery, financing repayments, taxes, land, transport, salaries outside the allowance, depreciation or unexpected losses. First-cycle cash position after all modeled setup costs and contingency: <strong>{ugx(result.firstCycleCashResult)}</strong>. The business case must consider repeated cycles.</p>
           </div>
 
+          <div className="financePanel">
+            <h3>Investment recovery & payback</h3>
+            <div className="financeMetrics">
+              <div><small>Initial capital to recover</small><strong>{ugx(investment.initialCapital)}</strong></div>
+              <div><small>Expected net cash / season</small><strong>{ugx(investment.cashSurplusPerCycle)}</strong></div>
+              <div><small>Payback in full seasons</small><strong>{investment.paybackSeasons === null ? "No payback" : investment.paybackSeasons + " season(s)"}</strong></div>
+              <div><small>Approximate elapsed time</small><strong>{investment.paybackMonths === null ? "Not recovered" : investment.paybackMonths + " months"}</strong></div>
+            </div>
+            <p className="financeMuted">Payback counts complete {inputs.cycleDays}-day production cycles required to recover initial setup costs from estimated repeat-cycle net cash, including a 10% cost allowance. It excludes loan interest, tax, land, significant repairs and costs not priced here.</p>
+            <div className="financeScenarioTable">
+              <div className="financeScenarioHeading"><span>Scenario</span><span>Net per season</span><span>Payback</span></div>
+              {investment.scenarios.map(s => (
+                <div key={s.label} className="financeScenarioRow">
+                  <span>{s.label}</span>
+                  <span className={s.cashSurplus < 0 ? "financeNegative" : ""}>{ugx(s.cashSurplus)}</span>
+                  <strong>{s.paybackSeasons === null ? "Not reached" : s.paybackSeasons + " seasons"}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="financeMuted">Conservative: lower survival, higher FCR and selling price 10% lower. Optimistic: slightly higher survival, better FCR and selling price 10% higher. Even the optimistic case is not a guarantee.</p>
+          </div>
+
           <div className="financeCautions">
             <strong>Important planning checks</strong>
             <ul>{result.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
+          </div>
+          <div className="financeProposal" id="prepare-proposal">
+            <h3>Turn your estimate into a funding proposal</h3>
+            <p>Generate a personalised PDF you can download, print or send to a bank, investor, farmer group or other potential funder. Your assumptions, fish plan, cost breakdown, filtration screening, risk cases and payback analysis are included automatically.</p>
+            <div className="financeField">
+              <label htmlFor="proposalName">Applicant or organisation (optional)</label>
+              <input id="proposalName" type="text" maxLength={100} placeholder="Name or organisation"
+                value={applicant.name} onChange={e => setApplicantField("name", e.target.value)} />
+            </div>
+            <div className="financeField">
+              <label htmlFor="proposalProject">Project title (optional)</label>
+              <input id="proposalProject" type="text" maxLength={120} placeholder="e.g. Kanyanya Catfish Enterprise"
+                value={applicant.projectName} onChange={e => setApplicantField("projectName", e.target.value)} />
+            </div>
+            <div className="financeTwoCol">
+              <div className="financeField">
+                <label htmlFor="proposalLocation">Proposed farm location</label>
+                <input id="proposalLocation" type="text" maxLength={120} placeholder="District, town"
+                  value={applicant.location} onChange={e => setApplicantField("location", e.target.value)} />
+              </div>
+              <div className="financeField">
+                <label htmlFor="proposalContact">Contact (optional)</label>
+                <input id="proposalContact" type="text" maxLength={100} placeholder="Email or phone"
+                  value={applicant.contact} onChange={e => setApplicantField("contact", e.target.value)} />
+              </div>
+            </div>
+            <div className="financeField">
+              <label htmlFor="proposalFinancier">Who will receive the funding request? (optional)</label>
+              <input id="proposalFinancier" type="text" maxLength={120} placeholder="e.g. Equity Bank Uganda / investor"
+                value={applicant.financier} onChange={e => setApplicantField("financier", e.target.value)} />
+            </div>
+            <div className="financeField">
+              <label htmlFor="proposalContribution">Your own contribution (UGX)</label>
+              <Numeric id="proposalContribution" min={0} max={100000000} step={100000}
+                value={applicant.contribution}
+                onChange={v => setApplicantField("contribution", Math.max(0, Math.min(result.projectTotal, v)))} />
+              <small>Funding gap: {ugx(Math.max(0, result.projectTotal - applicant.contribution))} of the estimated {ugx(result.projectTotal)} project cost. This is a financing request, not an approved facility.</small>
+            </div>
+            <div className="financeField">
+              <label htmlFor="proposalNotes">Notes for a funder (optional)</label>
+              <textarea id="proposalNotes" maxLength={700} rows={3} placeholder="Land or premises available, experience, possible buyers, etc."
+                value={applicant.notes} onChange={e => setApplicantField("notes", e.target.value)} />
+            </div>
+            <button type="button" className="financeDownload" disabled={isDownloading} onClick={downloadProposal}>
+              {isDownloading ? "Preparing PDF..." : "Download My Funding Proposal (PDF) ↓"}
+            </button>
+            {proposalError && <p role="alert" className="financeShortfall">{proposalError}</p>}
+            <p className="financeMuted">PDF figures are recalculated by SANDS' server when you download. Details are used to generate the PDF and are not saved to a SANDS customer database. This proposal is an early estimate, not a bank application or final quotation.</p>
           </div>
           <a className="financeRequest" href={inquiryUrl} target="_blank" rel="noreferrer">Request a detailed SANDS quotation →</a>
           <p className="financeFinePrint">Your selections are sent to WhatsApp only if you open the request. No Equity Bank application or loan approval is submitted from this page. Equipment and electricity assumptions need confirmed quotations. A loan product would be added only after a bank partnership is agreed.</p>
