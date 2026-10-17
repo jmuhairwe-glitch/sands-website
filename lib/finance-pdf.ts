@@ -226,6 +226,9 @@ export function generateFarmProposal(
   writer.item("Indicative ammonia nitrogen load", quantity(farm.tanGramsDay, 1) + " g TAN/day");
   writer.item("Indicative oxygen demand", quantity(farm.oxygenKgDay, 2) + " kg O2/day");
   writer.item("Total flow allocated to tanks", quantity(farm.nominalPumpLph) + " litres/hour");
+  writer.item("Water source", ({piped: "NWSC / piped", borehole: "Borehole / well", other: "Other reliable source", unspecified: "To be confirmed"}[input.waterSource]));
+  writer.item("Reliable daily freshwater supply", farm.waterSourceCapacityKnown ? quantity(input.availableNewWaterLpd) + " litres/day" : "UNVERIFIED");
+  writer.item("Daily source capacity check", !farm.waterSourceCapacityKnown ? "Needs site assessment" : farm.sufficientFreshWater ? "Adequate volume (screen)" : "INSUFFICIENT");
   writer.item("NEW water exchanged daily", input.waterExchangePct.toFixed(0) + "% of working volume");
   writer.item("20% baseline daily exchange", quantity(farm.volumeLitres * .2) + " litres");
   writer.item("50% alternative daily exchange", quantity(farm.volumeLitres * .5) + " litres");
@@ -248,7 +251,7 @@ export function generateFarmProposal(
     writer.item("Existing biofilter reported", input.biofilterPresent ? "Yes - requires assessment" : "No");
     writer.item("Existing aeration reported", input.aerationPresent ? "Yes - requires assessment" : "No");
   }
-  writer.paragraph("The standard SANDS circular tank is 2m diameter x 1.2m high (~3,770L brimful), with ~3,142L at assumed 1.0m working depth. The proposed 5,000L WORKING tank has unconfirmed fabricator costs. The selected 20%-100% daily water-exchange percentage represents incoming fresh water and matched discharge and is SEPARATE from internal pump flow. A 50,000L/h, 500W nominal shared pump recirculates existing water. Even 50% exchange does NOT prove safe 500kg production: measure solids filtration, biofilter TAN conversion, oxygen supply, CO2 stripping, water-source quality and effluent handling. Source-water pricing at zero means UNPRICED, not free.");
+  writer.paragraph("A client may use reliable piped/NWSC water, a borehole, or another clean fresh-water source. Each requires verification of year-round flow, fish-safe water quality, any dechlorination or iron/gas treatment, reserve storage, source pumping cost, and wastewater management. The standard SANDS tank is 2m diameter x 1.2m high (~3,142L working water at assumed 1m fill). The optional 5,000L tank has unconfirmed fabrication costs. Exchange of 20-100% per day means NEW water and equivalent discharged water, not internal pump recirculation. The 50,000L/h, 500W nominal pump is internal circulation. Even 50% exchange does not establish safe 500kg harvest per tank: test solids capture, nitrification, oxygen delivery, CO2 and backup. A zero water tariff is UNPRICED.");
 
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
