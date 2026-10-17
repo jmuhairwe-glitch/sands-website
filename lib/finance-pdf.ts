@@ -189,10 +189,11 @@ export function generateFarmProposal(
   writer.item("Provisional pump electrical input", quantity(input.pumpWatts) + " W per pump");
   writer.item("Provisional aeration electrical input", quantity(input.aerationWattsPerTank) + " W per tank");
   writer.item("Support and training allowance", ugx(farm.supportCost));
-  writer.item("Testing and water-supply allowance", ugx(farm.waterTestingCost));
+  writer.item("Water testing and supplies", ugx(farm.waterTestingCost));
+  writer.item("Fresh water (first fill + exchange)", ugx(farm.waterSupplyCost) + (input.waterCostPer1000L === 0 ? " - unpriced" : ""));
   writer.item("Contingency (10%)", ugx(farm.contingency));
   writer.item("Total first-cycle financing need", ugx(farm.projectTotal));
-  writer.note("SANDS-reported standard equipment prices (UGX): tank 1,100,000; 30,000 L/hour pump 1,500,000; filter 600,000; aeration 350,000; piping/installation 350,000. Pump capacity is shared provisionally across tanks and requires on-site verification. Backup power UGX 1,200,000 and energy/support/testing allowances remain unconfirmed. Feed price: " + ugx(profile.feedPriceKg) + "/kg. Fingerlings UGX 500 each are still provisional. These are not contractual quotations.");
+  writer.note("SANDS-reported standard prices (UGX): tank 1,100,000 PER TANK; mechanical and biological filtration 600,000 PER TANK (confirmed); aeration 350,000 and piping/installation 350,000 provisionally costed per tank; ONE 30,000 L/hour pump costing 1,500,000 shared across up to six tanks. Check delivered flow at installed head. Backup power 1,200,000, energy, support, testing and source-water charge are not yet verified. Feed: " + ugx(profile.feedPriceKg) + "/kg. Fingerlings 500 each still provisional. These are not contractual quotations.");
 
   writer.heading("4. FEED & FILTRATION ENGINEERING SCREEN");
   writer.item("Feed conversion ratio (FCR)", input.fcr.toFixed(2));
@@ -201,6 +202,14 @@ export function generateFarmProposal(
   writer.item("Indicative ammonia nitrogen load", quantity(farm.tanGramsDay, 1) + " g TAN/day");
   writer.item("Indicative oxygen demand", quantity(farm.oxygenKgDay, 2) + " kg O2/day");
   writer.item("Total flow allocated to tanks", quantity(farm.nominalPumpLph) + " litres/hour");
+  writer.item("NEW water exchanged daily", input.waterExchangePct.toFixed(0) + "% of working volume");
+  writer.item("Fresh makeup water per day", quantity(farm.dailyFreshWaterLitres) + " litres");
+  writer.item("Wastewater discharge per day", quantity(farm.dailyDischargeLitres) + " litres");
+  writer.item("Exchange water over full season", quantity(farm.cycleExchangeWaterLitres) + " litres");
+  writer.item("Initial system fill (new installations)", quantity(farm.initialFillLitres) + " litres");
+  writer.item("First-season new water total", quantity(farm.firstCycleFreshWaterLitres) + " litres");
+  writer.item("Water cost used", ugx(input.waterCostPer1000L) + "/1,000 L" + (input.waterCostPer1000L === 0 ? " - UNPRICED" : ""));
+
   if (input.mode === "new") {
     writer.item("Shared pumps provisionally costed", quantity(farm.pumpUnits) + " unit(s)");
     writer.item("Reported nominal pump flow", quantity(farm.nominalInstalledFlowLph) + " litres/hour");
@@ -212,7 +221,7 @@ export function generateFarmProposal(
     writer.item("Existing biofilter reported", input.biofilterPresent ? "Yes - requires assessment" : "No");
     writer.item("Existing aeration reported", input.aerationPresent ? "Yes - requires assessment" : "No");
   }
-  writer.paragraph("The SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful); planning uses ~3,142 L per tank at 1.0 m assumed water depth. One reported 30,000 L/h pump is provisionally shared across up to six standard tanks. A manifold directs the required flow to tanks and surplus nominal flow through a return to the final filter/aeration stage. These are NOT measured flows or certified oxygenation. Bypass must not short-circuit biological/solids treatment. Tank turnover and fish-density calculations are screening checks only. Before stocking, verify delivered flow at head, actual fill depth, dissolved-oxygen transfer, biofilter TAN conversion, CO2 removal, backup power, water availability and site conditions.");
+  writer.paragraph("The SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful); planning uses ~3,142 L per tank at 1.0 m assumed water depth. A minimum 20% of working water is replaced with NEW water each day, with equivalent wastewater discharge; this is entirely separate from internal pump circulation. A 30,000 L/h nominal pump is shared across up to six standard tanks, with the excess routed to the filter/aeration return; measured head, actual delivery and safe treatment capacity must be verified. A 20% water exchange does NOT establish safe stocking at this proposed biomass. Verify oxygen transfer, TAN conversion, solids, CO2, source quality and reliability, discharge compliance, pH, alkalinity and power backup.");
 
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
