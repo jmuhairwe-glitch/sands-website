@@ -5,6 +5,7 @@
  */
 export type Species = "catfish" | "tilapia";
 export type FarmMode = "new" | "existing";
+export type WaterSource = "unspecified" | "piped" | "borehole" | "other";
 export type FarmInputs = {
   mode: FarmMode;
   budget: number;
@@ -24,6 +25,8 @@ export type FarmInputs = {
   pumpWatts: number; // SANDS-reported electrical power draw PER shared installed pump
   aerationWattsPerTank: number; // SANDS-reported aerator draw, model assumes one aerator per tank
   waterExchangePct: number; // fresh water replaced daily, minimum 20% of working volume
+  waterSource: WaterSource; // piped, borehole or other reliable clean supply
+  availableNewWaterLpd: number; // user-confirmed reliable litres/day; zero = unknown
   waterCostPer1000L: number; // UGX per 1,000 L, 0 means water acquisition cost unpriced
   starterBagKgPerTank: number; // assumed bag size, SANDS still to confirm
   otherSeasonCost: number; // editable unpriced labour, harvesting, freight and repairs per cycle
@@ -47,6 +50,8 @@ export type FarmResult = {
   provisionalBypassFlowLph: number;
   flowPerTankLph: number;
   dailyFreshWaterLitres: number;
+  waterSourceCapacityKnown: boolean;
+  sufficientFreshWater: boolean;
   cycleExchangeWaterLitres: number;
   initialFillLitres: number;
   firstCycleFreshWaterLitres: number;
@@ -95,7 +100,8 @@ export const DEFAULTS: FarmInputs = {
   fcr: 1.3, survival: .85, harvestKgEach: 1, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
   pumpWatts: 500, aerationWattsPerTank: 40,
-  waterExchangePct: 20, waterCostPer1000L: 0, starterBagKgPerTank: 25,
+  waterExchangePct: 20, waterSource: "unspecified", availableNewWaterLpd: 0,
+  waterCostPer1000L: 0, starterBagKgPerTank: 25,
   otherSeasonCost: 0, upgradedTankExtraCostPerTank: 0, extraFiltrationBudget: 0,
 };
 
@@ -134,6 +140,9 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   // At steady volume, that also means approximately 628.4 L/day discharged.
   const waterExchangePct = clean(inputs.waterExchangePct, 20, 20, 100);
   const dailyFreshWaterLitres = volumeLitres * waterExchangePct / 100;
+  const reliableSourceLitresDaily = clean(inputs.availableNewWaterLpd, 0, 0, 100000000);
+  const waterSourceCapacityKnown = reliableSourceLitresDaily > 0;
+  const sufficientFreshWater = !waterSourceCapacityKnown || reliableSourceLitresDaily >= dailyFreshWaterLitres;
   const cycleExchangeWaterLitres = dailyFreshWaterLitres * days;
   const initialFillLitres = isExisting ? 0 : volumeLitres;
   const firstCycleFreshWaterLitres = initialFillLitres + cycleExchangeWaterLitres;
@@ -247,6 +256,12 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const projectedSales = harvestKg * clean(inputs.salePriceKg, 10000, 1000, 50000);
   const cycleOperatingMargin = projectedSales - runningCost;
   const warnings: string[] = [];
+  if (inputs.waterSource === "unspecified") warnings.push("Water supply type not selected. Source may be piped, borehole or other reliable clean water; verify at site.");
+  if (!waterSourceCapacityKnown) warnings.push("Available NEW water per day not verified. For the selected exchange, demonstrate at least " + Math.ceil(dailyFreshWaterLitres).toLocaleString("en-UG") + " L/day of reliable source-water capacity plus top-up for cleaning and evaporation.");
+  if (!sufficientFreshWater) warnings.push("SOURCE-WATER SHORTFALL: " + Math.ceil(dailyFreshWaterLitres).toLocaleString("en-UG") + " L/day of new water required, but only " + Math.floor(reliableSourceLitresDaily).toLocaleString("en-UG") + " L/day available. Reduce tank count or exchange, improve storage/supply, and reassess before stocking.");
+  if (inputs.waterSource === "borehole") warnings.push("Borehole supply: confirm sustainable yield, pump and treatment electricity costs, and test iron, pH, dissolved gases and contamination before use.");
+  if (inputs.waterSource === "piped") warnings.push("Piped supply: confirm daily delivery reliability, tariff, chlorine/chloramine removal, reserve storage and safe water quality.");
+  if (inputs.waterSource === "other") warnings.push("Alternative supply: verify dependable daily volume, contamination/treatment risks, legal access and quality during dry and wet seasons.");
   if (extraFiltrationBudget === 0 && isSandsPackage && waterExchangePct >= 50) warnings.push("At 50% or higher daily fresh-water replacement, filtration upgrades have NOT been priced. The standard UGX 600,000 per-tank filter is included, but extra media, solids removal or oxygenation must be assessed separately. A zero additional allowance is UNPRICED, not proof that upgrades are unnecessary.");
   if (extraFiltrationBudget > 0) warnings.push("Additional filtration allowance is a user-entered whole-system capital sum above the SANDS package and is included in first-season investment and payback. Technical treatment capacity still requires verification.");
   if (waterExchangePct >= 50) warnings.push("High daily water exchange needs dependable clean source water and controlled effluent handling; verify source water pH, ammonia, oxygen, temperature, pressure and availability.");
@@ -280,11 +295,12 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   if (projectedSales - projectTotal < 0) warnings.push("First-cycle receipts do not recover installation plus running costs; equipment is a multi-cycle investment.");
   warnings.push("SANDS must validate oxygen, solids removal, TAN conversion, CO2 stripping, water availability, power and actual site costs before stocking.");
   return {
-    feasible: fishStocked > 0 && (!isExisting || projectTotal <= budget),
+    feasible: fishStocked > 0 && sufficientFreshWater && (!isExisting || projectTotal <= budget),
     tanks: count, volumeLitres, fishStocked, fishHarvested, harvestKg,
     feedKg, peakFeedKgDay, tanGramsDay, oxygenKgDay, nominalPumpLph,
     pumpUnits, nominalInstalledFlowLph, provisionalBypassFlowLph, flowPerTankLph,
-    dailyFreshWaterLitres, cycleExchangeWaterLitres, initialFillLitres,
+    dailyFreshWaterLitres, waterSourceCapacityKnown, sufficientFreshWater,
+    cycleExchangeWaterLitres, initialFillLitres,
     firstCycleFreshWaterLitres, dailyDischargeLitres,
     waterExchangeCost, initialFillWaterCost, waterSupplyCost, otherSeasonCost,
     extraFiltrationBudget,
@@ -306,14 +322,14 @@ export function simulateFarm(inputs: FarmInputs): FarmResult {
   let best: FarmResult | null = null;
   for (let tanks = 1; tanks <= 100; tanks++) {
     const next = calculate(inputs, tanks);
-    if (next.projectTotal <= inputs.budget) best = next;
+    if (next.projectTotal <= inputs.budget && next.sufficientFreshWater) best = next;
     else break;
   }
   if (best) return best;
   const smallest = calculate(inputs, 1);
   return {
     ...smallest, feasible: false,
-    warnings: ["Budget does not cover the complete first-cycle estimate for one tank. The shortfall is shown below.", ...smallest.warnings]
+    warnings: ["Budget and/or confirmed source-water supply does not cover the complete first-cycle estimate for one tank. See the shortfall and site water requirements.", ...smallest.warnings]
   };
 }
 export function ugx(n: number): string {
