@@ -22,7 +22,7 @@ export type FarmInputs = {
   cycleDays: number;
   electricityTariff: number;
   pumpWatts: number; // SANDS-reported electrical power draw PER shared installed pump
-  aerationWattsPerTank: number; // provisional electric draw PER tank
+  aerationWattsPerTank: number; // SANDS-reported aerator draw, model assumes one aerator per tank
   waterExchangePct: number; // fresh water replaced daily, minimum 20% of working volume
   waterCostPer1000L: number; // UGX per 1,000 L, 0 means water acquisition cost unpriced
 };
@@ -77,7 +77,7 @@ export const DEFAULTS: FarmInputs = {
   aerationPresent: false, backupPresent: false,
   fcr: 1.3, survival: .85, harvestKgEach: 1, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
-  pumpWatts: 300, aerationWattsPerTank: 100,
+  pumpWatts: 300, aerationWattsPerTank: 40,
   waterExchangePct: 20, waterCostPer1000L: 0,
 };
 
@@ -90,7 +90,7 @@ export const SANDS_TANK = {
   workingLitres: Math.round(Math.PI * 1 * 1 * 1 * 1000),
   tankCost: 1100000, pumpCost: 1500000, pumpFlowLph: 30000, pumpPowerWatts: 300,
   tanksPerPump: 6, targetTurnoversPerHour: 1.25,
-  filterCost: 600000, aerationCost: 350000, pipingInstallCost: 350000,
+  filterCost: 600000, aerationCost: 350000, aerationPowerWatts: 40, pipingInstallCost: 350000,
   catfishHarvestTargetPerTank: 500,
 } as const;
 
@@ -178,10 +178,10 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const fingerlingsCost = fishStocked * species.fingerlingPrice;
   const feedCost = feedKg * species.feedPriceKg;
   // Pump input is SANDS-reported 300 W per shared pump; this is separate
-  // from the 30,000 L/h nominal hydraulic rating. Additional 100 W/tank
-  // aeration is an UNCONFIRMED estimate until measured/nameplate-verified.
+  // from the 30,000 L/h nominal hydraulic rating. SANDS reports a 40 W
+  // aerator. The model provisionally assumes one 40 W aerator per tank.
   const assumedWatts = clean(inputs.pumpWatts, SANDS_TANK.pumpPowerWatts, 50, 10000) * (isExisting ? 1 : pumpUnits)
-    + clean(inputs.aerationWattsPerTank, 100, 0, 3000) * count;
+    + clean(inputs.aerationWattsPerTank, SANDS_TANK.aerationPowerWatts, 0, 3000) * count;
   const energyCost = (assumedWatts / 1000) * 24 * days *
     clean(inputs.electricityTariff, 850, 100, 2500);
   const supportCost = 400000 + 180000 * count;
@@ -200,7 +200,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
   if (!isExisting) warnings.push("One nominal 30,000 L/h pump is costed for up to six standard tanks. Its actual delivered flow at installed head, valve allocation, bypass route and power draw must be confirmed.");
   if (!isExisting && provisionalBypassFlowLph > 0) warnings.push("Nominal flow not directed to grow-out tanks (" + Math.round(provisionalBypassFlowLph).toLocaleString("en-UG") + " L/h) is assumed routed to the aerating/filter return. This bypass is not guaranteed additional dissolved oxygen and must not short-circuit treatment.");
-  warnings.push("SANDS reports a 300 W electrical rating for the shared pump; confirm actual input at operating duty. Backup power UGX 1,200,000, aeration watts, support, testing and contingency remain unconfirmed allowances.");
+  warnings.push("SANDS reports 300 W for each shared circulation pump and 40 W for each aerator. This estimate assumes one aerator per tank; confirm whether aerators are actually shared, and verify actual power draw. Backup power UGX 1,200,000, support, testing and contingency remain unconfirmed allowances.");
   if (inputs.species === "catfish") {
     const density = harvestKg / Math.max(.001, volumeLitres / 1000);
     if (density > 100) warnings.push("HIGH-INTENSITY DESIGN: " + Math.round(density) + " kg/m3 expected harvest biomass. This is a proposed output target only. SANDS must verify aeration/oxygen transfer, filtration TAN removal, solids, CO2 stripping, backup and water-quality monitoring. No stocking approval is implied.");
