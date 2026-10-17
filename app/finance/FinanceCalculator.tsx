@@ -17,9 +17,21 @@ export default function FinanceCalculator() {
   });
   const [isDownloading, setIsDownloading] = useState(false);
   const [proposalError, setProposalError] = useState("");
-  const set = (update: Partial<FarmInputs>) => setInputs(current => ({ ...current, ...update }));
-  const setApplicantField = (field: keyof typeof applicant, value: string | number) =>
+  const [leadPhone, setLeadPhone] = useState("");
+  const [leadConsent, setLeadConsent] = useState(false);
+  const [includeBudgetInLead, setIncludeBudgetInLead] = useState(false);
+  const [leadWebsite, setLeadWebsite] = useState("");
+  const [leadSaving, setLeadSaving] = useState(false);
+  const [leadSavedReference, setLeadSavedReference] = useState("");
+  const [leadError, setLeadError] = useState("");
+  const set = (update: Partial<FarmInputs>) => {
+    setInputs(current => ({ ...current, ...update }));
+    setLeadSavedReference("");
+  };
+  const setApplicantField = (field: keyof typeof applicant, value: string | number) => {
     setApplicant(current => ({ ...current, [field]: value }));
+    setLeadSavedReference("");
+  };
   const result = useMemo(() => simulateFarm(inputs), [inputs]);
   const investment = useMemo(() => evaluateInvestment(inputs, result), [inputs, result]);
   async function downloadProposal() {
@@ -49,6 +61,67 @@ export default function FinanceCalculator() {
       setProposalError(error instanceof Error ? error.message : "Could not download proposal.");
     } finally {
       setIsDownloading(false);
+    }
+  }
+  async function sendPlanToSands() {
+    setLeadError("");
+    if (!leadConsent) { setLeadError("Please agree to share your contact details before submitting."); return; }
+    const name = applicant.name.trim(), location = applicant.location.trim();
+    const phone = leadPhone.trim() || applicant.contact.trim();
+    if (!name || name.length > 160 || !location || location.length > 300 || !/^\\+?[0-9 ()-]{7,25}$/.test(phone)) {
+      setLeadError("Enter your name, project location and a valid phone or WhatsApp number to submit.");
+      return;
+    }
+    if (leadSavedReference || leadSaving) return;
+    setLeadSaving(true);
+    const reference = crypto.randomUUID();
+    try {
+      // Store only what the visitor has chosen to share. Slider activity
+      // and estimated budgets are private unless the visitor opts in.
+      const details: Record<string, unknown> = {
+        origin: "finance_simulator", version: "beta", farm_mode: inputs.mode,
+        species: inputs.species, tank_count: result.tanks,
+        working_litres_per_tank: inputs.tankLitres,
+        target_harvest_kg: result.harvestKg,
+        daily_water_exchange_pct: inputs.waterExchangePct,
+        proposed_water_source: inputs.waterSource,
+        requested_followup: true,
+        applicant_project: applicant.projectName.slice(0, 120),
+        applicant_notes: applicant.notes.slice(0, 700),
+        budgets_shared: includeBudgetInLead,
+      };
+      if (includeBudgetInLead) {
+        details.available_budget_ugx = inputs.budget;
+        details.first_cycle_estimate_ugx = result.projectTotal;
+        details.own_contribution_ugx = applicant.contribution;
+        details.financing_gap_ugx = Math.max(0, result.projectTotal - applicant.contribution);
+      }
+      const message = [
+        "Opt-in farm finance simulator enquiry from sands.co.ug/finance.",
+        "Farm: " + (applicant.projectName.trim() || "New fish farm"),
+        "Species: " + inputs.species,
+        "System: " + (inputs.mode === "new" ? "New SANDS installation" : "Existing tanks"),
+        "Tanks: " + result.tanks + " x " + inputs.tankLitres + " litres working water.",
+        "The customer requests contact from SANDS.",
+        includeBudgetInLead ? "Budget and financing selections shared with consent." : "Customer chose NOT to share personal budget or finance amounts.",
+      ].join("\n");
+      const response = await fetch("/api/enquiries", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: reference, topic: "Tanks & recycling",
+          customer_name: name, phone, location,
+          preferred_date: null, details, message,
+          website: leadWebsite,
+        }),
+      });
+      const saved = await response.json().catch(() => ({}));
+      if (!response.ok || saved.saved !== true)
+        throw new Error(typeof saved.error === "string" ? saved.error : "Could not save your enquiry.");
+      setLeadSavedReference(reference);
+    } catch (error) {
+      setLeadError(error instanceof Error ? error.message : "Could not save your details. Please try again.");
+    } finally {
+      setLeadSaving(false);
     }
   }
   const isNew = inputs.mode === "new";
@@ -385,7 +458,30 @@ export default function FinanceCalculator() {
             </button>
             <p className="financeSampleLink"><a href="/api/finance-proposal?sample=1">Download an example proposal (PDF)</a></p>
             {proposalError && <p role="alert" className="financeShortfall">{proposalError}</p>}
-            <p className="financeMuted">PDF figures are recalculated by SANDS' server when you download. Details are used to generate the PDF and are not saved to a SANDS customer database. This proposal is an early estimate, not a bank application or final quotation.</p>
+            <p className="financeMuted">Downloading a PDF does not automatically store your name, contact information or budget with SANDS. To request follow-up, use the optional form below. Figures remain indicative and are not a bank application or final quotation.</p>
+            <div className="financePanel">
+              <h3>Send my farm plan to SANDS</h3>
+              <p>Want SANDS to follow up with you? Use the name and location entered above and add a phone number. We'll keep your enquiry in our private customer register. You can use the simulator and download the PDF without submitting this form.</p>
+              <div className="financeField">
+                <label htmlFor="leadPhone">Phone / WhatsApp for follow-up</label>
+                <input id="leadPhone" type="tel" inputMode="tel" autoComplete="tel" maxLength={25} placeholder="+256 7XX XXX XXX" value={leadPhone} onChange={e => { setLeadPhone(e.target.value); setLeadSavedReference(""); }} />
+                <small>For submitting a plan, name and project location above are required too. You may also use the phone number in the proposal contact field.</small>
+              </div>
+              <label className="financeConsent">
+                <input type="checkbox" checked={includeBudgetInLead} onChange={e => { setIncludeBudgetInLead(e.target.checked); setLeadSavedReference(""); }} />
+                Include my budget, funding request and estimated project costs in the enquiry sent to SANDS (optional).
+              </label>
+              <label className="financeConsent">
+                <input type="checkbox" checked={leadConsent} onChange={e => setLeadConsent(e.target.checked)} />
+                I agree that SANDS Fish Farm may privately save my name, phone, location and selected farm plan to contact me about this enquiry.
+              </label>
+              <label aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: "1px", height: "1px", overflow: "hidden" }}>Website <input type="text" tabIndex={-1} autoComplete="off" value={leadWebsite} onChange={e => setLeadWebsite(e.target.value)}/></label>
+              {!leadSavedReference ? <button type="button" className="financeDownload" disabled={leadSaving || !leadConsent} onClick={sendPlanToSands}>
+                {leadSaving ? "Saving your enquiry..." : "Send My Farm Plan to SANDS →"}
+              </button> : <p role="status"><strong>Enquiry saved privately.</strong> SANDS can contact you using the supplied details. Reference: {leadSavedReference.slice(0, 8)}.</p>}
+              {leadError && <p role="alert" className="financeShortfall">{leadError}</p>}
+              <p className="financeMuted">SANDS saves information only when you select Send My Farm Plan. Your budget is excluded unless you check the optional budget-sharing box. We do not submit anything to a bank. For access or deletion requests, contact SANDS using the WhatsApp link below.</p>
+            </div>
           </div>
           <div className="financePanel">
             <h3>Help us improve this pilot</h3>
