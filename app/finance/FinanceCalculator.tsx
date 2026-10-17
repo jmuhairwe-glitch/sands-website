@@ -61,6 +61,7 @@ export default function FinanceCalculator() {
     "Tank(s): " + result.tanks + " x " + quantity(inputs.tankLitres) + " L",
     "Estimated fingerlings: " + quantity(result.fishStocked),
     "Estimated feed: " + quantity(result.feedKg, 1) + " kg",
+    "Daily fresh water exchange: " + inputs.waterExchangePct + "% (" + quantity(result.dailyFreshWaterLitres) + " L/day)",
     "Estimated project cost: " + ugx(result.projectTotal),
     "Requested: on-site assessment and itemised quote.",
   ].join("\n");
@@ -112,6 +113,11 @@ export default function FinanceCalculator() {
             </select>
           </div>
 
+          <div className="financeField">
+            <label htmlFor="waterExchangePct">Daily NEW water exchange (% of operating volume)</label>
+            <Numeric id="waterExchangePct" value={inputs.waterExchangePct} min={20} max={100} step={5} onChange={(waterExchangePct) => set({ waterExchangePct })}/>
+            <small>SANDS minimum: 20% per day. Fresh water is separate from recirculating pump flow.</small>
+          </div>
           {isNew ? (
             <div className="financeField">
               <label>SANDS standard circular tank</label>
@@ -152,6 +158,7 @@ export default function FinanceCalculator() {
               <div className="financeField"><label htmlFor="powerTariff">Electricity (UGX/kWh)</label><Numeric id="powerTariff" value={inputs.electricityTariff} min={100} max={2500} step={50} onChange={(electricityTariff) => set({ electricityTariff })}/></div>
               <div className="financeField"><label htmlFor="pumpWatts">Pump electrical draw (W per pump)</label><Numeric id="pumpWatts" value={inputs.pumpWatts} min={50} max={10000} step={50} onChange={(pumpWatts) => set({ pumpWatts })}/></div>
               <div className="financeField"><label htmlFor="aerationWatts">Aeration electrical draw (W per tank)</label><Numeric id="aerationWatts" value={inputs.aerationWattsPerTank} min={0} max={3000} step={25} onChange={(aerationWattsPerTank) => set({ aerationWattsPerTank })}/></div>
+              <div className="financeField"><label htmlFor="waterRate">Source water cost (UGX/1,000 L)</label><Numeric id="waterRate" value={inputs.waterCostPer1000L} min={0} max={100000} step={500} onChange={(waterCostPer1000L) => set({ waterCostPer1000L })}/><small>UGX 0 means not priced, NOT free. Enter a real water cost for the profitability estimate.</small></div>
             </div>
             <p className="financeMuted">SANDS catfish feed/equipment costs and sales target were updated from supplied figures. Stocking is now reverse-calculated from the target HARVEST count to include mortality. Survival, starting weight, FCR, pump wattage, operating depth, and high-intensity filtration capacity still need confirmation. Fingerlings remain UGX 500/fish pending confirmation; feed is {ugx(profile.feedPriceKg)}/kg.</p>
           </details>
@@ -180,8 +187,9 @@ export default function FinanceCalculator() {
             <div className="financeCost"><span>Estimated power</span><b>{ugx(result.energyCost)}</b></div>
             <div className="financeCost"><span>Support and training allowance</span><b>{ugx(result.supportCost)}</b></div>
             <div className="financeCost"><span>Water testing and supplies</span><b>{ugx(result.waterTestingCost)}</b></div>
+            <div className="financeCost"><span>Fresh water supply, initial fill + exchange</span><b>{ugx(result.waterSupplyCost)}{inputs.waterCostPer1000L === 0 ? " (unpriced)" : ""}</b></div>
             <div className="financeCost"><span>10% contingency</span><b>{ugx(result.contingency)}</b></div>
-            {isNew && <p className="financeMuted">SANDS component prices: tank {ugx(SANDS_TANK.tankCost)}, filter {ugx(SANDS_TANK.filterCost)}, aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)} per tank. <strong>{quantity(result.pumpUnits)} shared pump(s)</strong> are costed at {ugx(SANDS_TANK.pumpCost)} each, with one nominal 30,000 L/h pump for up to six standard tanks. Backup power {ugx(1200000)} is only a provisional allowance. The standard UGX 600,000 filtration package is NOT yet certified for a 500 kg/tank production target. Electricity uses an UNCONFIRMED {quantity(inputs.pumpWatts)} W per pump + {quantity(inputs.aerationWattsPerTank)} W/tank; change these in advanced settings to match actual equipment.</p>}
+            {isNew && <p className="financeMuted">SANDS component prices PER TANK: tank {ugx(SANDS_TANK.tankCost)}, mechanical + biological filter {ugx(SANDS_TANK.filterCost)} (confirmed per tank), aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)}. <strong>{quantity(result.pumpUnits)} shared pump(s)</strong> are costed at {ugx(SANDS_TANK.pumpCost)} each, with one nominal 30,000 L/h pump for up to six standard tanks. Backup power {ugx(1200000)} is only a provisional allowance. The standard UGX 600,000 filtration package is NOT yet certified for a 500 kg/tank production target. Electricity uses an UNCONFIRMED {quantity(inputs.pumpWatts)} W per pump + {quantity(inputs.aerationWattsPerTank)} W/tank; change these in advanced settings to match actual equipment.</p>}
             <div className="financeTotal"><span>Total estimated project</span><strong>{ugx(result.projectTotal)}</strong></div>
             <div className="financeMeter" aria-label="Percentage of your budget used"><span style={{ width: Math.min(100, budgetUsedPercent) + "%" }} /></div>
             <p className={result.amountRemaining < 0 ? "financeShortfall" : "financeMuted"}>
@@ -203,6 +211,19 @@ export default function FinanceCalculator() {
               <div><small>Nominal bypass / aerating return</small><strong>{quantity(result.provisionalBypassFlowLph)} L/h</strong></div>
             </div>}
             <p className="financeMuted">One 30,000 L/h pump is shared between up to six SANDS standard tanks. Water goes through a distribution manifold; excess nominal capacity may recirculate via the final filtration/aeration stage. The bypass must not short-circuit waste treatment, and does not itself certify oxygen delivery. All flow figures require measurement at operating head. Planning factors: 2% peak-day feeding rate, 40 g TAN/kg feed, 0.6 kg O₂/kg feed, and a 1.25× tank-volume/hour circulation screen. SANDS must size the solids filter, biofilter media, oxygenation, CO₂ removal and backup power for the actual site.</p>
+          </div>
+
+          <div className="financePanel">
+            <h3>Fresh water supply and daily exchange</h3>
+            <div className="financeMetrics">
+              <div><small>New water replacement</small><strong>{quantity(inputs.waterExchangePct)}% per day</strong></div>
+              <div><small>Fresh make-up water</small><strong>{quantity(result.dailyFreshWaterLitres)} L/day</strong></div>
+              <div><small>Equivalent discharge</small><strong>{quantity(result.dailyDischargeLitres)} L/day</strong></div>
+              <div><small>Exchange water for full season</small><strong>{quantity(result.cycleExchangeWaterLitres)} L</strong></div>
+              <div><small>Initial tank fill (new systems)</small><strong>{quantity(result.initialFillLitres)} L</strong></div>
+              <div><small>Total first-season NEW water</small><strong>{quantity(result.firstCycleFreshWaterLitres)} L</strong></div>
+            </div>
+            <p className="financeMuted">A 20% exchange for a 3,142 L working tank is approximately 628 L/day of new water (and an equal amount removed to keep the level constant). The pump's 30,000 L/hour internal flow does not count as new water. Water quality and reliable source capacity must be verified. Evaporation, cleaning and spills require additional top-ups. {inputs.waterCostPer1000L === 0 ? "Water supply is currently UNPRICED. Set the per-1,000-litre water price in advanced settings; UGX 0 does not mean the water is free." : "Water source charges at " + ugx(inputs.waterCostPer1000L) + " per 1,000 L are included in running costs, but treatment, source pumping and wastewater charges still need checking."}</p>
           </div>
 
           <div className="financePanel">
