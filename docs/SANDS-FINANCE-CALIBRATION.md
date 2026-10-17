@@ -28,7 +28,7 @@
 | Feed budget cushion | 8% | **Unconfirmed**, retained |
 | Energy tariff | UGX 850/kWh | **Unconfirmed**, retained |
 | Pump electric draw | 300 W per shared pump | **SANDS-reported rating**; verify actual draw at operating head |
-| Aeration electric draw | 100 W/tank | **Unconfirmed**, retained |
+| Aeration electric draw | **40 W per aerator** | SANDS-reported; **one aerator per tank assumed until grouping confirmed** |
 | Backup power | UGX 1,200,000/install | **Unconfirmed** allowance |
 | Training/support | UGX 400,000 + 180,000 per tank/cycle | **Unconfirmed** allowance |
 | Water tests and supplies | UGX 250,000 + 120,000 per tank/cycle | **Unconfirmed** allowance |
@@ -57,10 +57,20 @@ Per standard tank at 85% assumed survival:
 - Feed estimate = (500 - 589 x 0.025) x 1.3 x 1.08 = **~681 kg** per tank.
 - Sales potential = **UGX 7,500,000/tank** at UGX 15,000/kg, *not guaranteed*.
 
+
+## Updated aeration electricity (SANDS reported 40 W)
+
+With one 300 W shared circulation pump, **one 40 W aerator per tank (provisional grouping)**, 24-hour continuous operation, 180 production days and the **unverified** UGX 850/kWh tariff:
+
+- One tank = (300 + 40) W x 24 h x 180 d = 1,468.8 kWh; **UGX 1,248,480** (previously UGX 1,468,800 with assumed 100 W aeration).
+- Six tanks = (300 + 6 x 40) W x 24 h x 180 d = 2,332.8 kWh; **UGX 1,982,880** (previously UGX 3,304,800).
+
+If the 40 W aerator serves multiple tanks, the totals should be reduced accordingly; verify dissolved-oxygen adequacy before doing so. The hydraulic recirculation pump and fresh-water exchange remain separate calculations.
+
 ## Still needed to validate lender PDF
 
 1. Normal operating water depth rather than assumed 1.0 m; actual flow to EACH tank after distribution and filter head.
-2. Verify the reported 300 W per shared pump against its nameplate or power meter, confirm aerator input (W), operating pattern, electricity tariff, backup power type and price.
+2. Verify the reported 300 W per shared pump and 40 W per aerator against nameplates or a power meter, and clarify if the aerator is dedicated to one tank or shared. Confirm operating pattern, electricity tariff, backup power type and price.
 3. **Filtration UGX 600k per tank is confirmed**. Verify whether UGX 350k aeration and UGX 350k piping are also per-tank prices and what they physically include.
 4. Actual TAN nitrification and suspended-solids loading capacity of the filter at peak feed. Oxygen transfer at demand, CO2 stripping, alkalinity/pH control and the flow layout for bypass return.
 5. Actual fingerling price and starting weight, observed survival, FCR at 1 kg, duration to reach 1 kg, and whether 500 kg in this standard tank has already been demonstrated.
