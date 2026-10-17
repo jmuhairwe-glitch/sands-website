@@ -1,8 +1,10 @@
 import { SPECIES, type FarmInputs, type FarmResult } from "./farm-finance";
 
 /**
- * Cash-flow screening, not a lender's appraisal. Assumes equivalent consecutive cycles,
- * no financing costs, no taxes, no large replacements, and a market at selected prices.
+ * First-season cash recovery and repeat-cycle economics, not a credit decision.
+ * Inclusive SANDS packages bundle the initial fingerlings and starter bag:
+ * these are not bought twice in the first cycle, but must be bought again in
+ * later cycles. Assumes all cash outflows occur before harvest for each season.
  */
 export type Scenario = {
   label: string;
@@ -13,6 +15,8 @@ export type Scenario = {
   harvestKg: number;
   feedKg: number;
   sales: number;
+  firstCycleOutlay: number;
+  firstCycleCashResult: number;
   recurringOutlay: number;
   cashSurplus: number;
   paybackSeasons: number | null;
@@ -20,7 +24,8 @@ export type Scenario = {
 };
 
 export type InvestmentAnalysis = {
-  initialCapital: number;
+  initialCapital: number; // total first-cycle outlay, not unbundled hardware price
+  firstCycleCashResult: number;
   recurringCycleOutlay: number;
   cashSurplusPerCycle: number;
   paybackSeasons: number | null;
@@ -30,9 +35,6 @@ export type InvestmentAnalysis = {
 
 function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
   const species = SPECIES[inputs.species];
-  // Initial installation and fresh fill are first-cycle only. Exchange water
-  // is recurring and should reduce each season's operating cash surplus.
-  const capital = (result.infrastructure + result.initialFillWaterCost) * 1.1;
   const definitions = [
     { label: "Conservative", survivalFactor: .87, fcrFactor: 1.15, priceFactor: .9 },
     { label: "Expected", survivalFactor: 1, fcrFactor: 1, priceFactor: 1 },
@@ -42,24 +44,36 @@ function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
     const survival = Math.min(.98, Math.max(.5, inputs.survival * s.survivalFactor));
     const fcr = inputs.fcr * s.fcrFactor;
     const priceKg = inputs.salePriceKg * s.priceFactor;
-    // Scenario survival can vary around the base case, but harvest biomass must
-    // stay inside the same culture-volume and recirculation screens.
     const screenVolume = inputs.mode === "existing"
       ? Math.min(result.volumeLitres, Math.max(0, inputs.actualFlowLph) / 1.25)
       : result.volumeLitres;
     const maxFishByDensity = Math.max(0, Math.floor(screenVolume / 1000 * species.densityKgM3 / inputs.harvestKgEach));
-    const fishSold = Math.min(maxFishByDensity, Math.floor(result.fishStocked * survival));
+    // Keep the maximum intended harvest at the customer's chosen base target.
+    const fishSold = Math.min(result.fishHarvested, maxFishByDensity, Math.floor(result.fishStocked * survival));
     const harvestKg = fishSold * inputs.harvestKgEach;
     const feedKg = Math.max(0, (harvestKg - result.fishStocked * .025) * fcr * 1.08);
-    const running = result.fingerlingsCost + feedKg * species.feedPriceKg +
-      result.energyCost + result.supportCost + result.waterTestingCost + result.waterExchangeCost;
-    const recurringOutlay = running * 1.1;
+    const additionalFirstFeedKg = Math.max(0, feedKg - result.includedStarterFeedKg);
+    const commonRunning = result.energyCost + result.supportCost + result.waterTestingCost + result.waterExchangeCost;
+    const firstCycleOutlay = (
+      result.infrastructure + result.fingerlingsCost
+      + additionalFirstFeedKg * species.feedPriceKg
+      + commonRunning + result.initialFillWaterCost
+    ) * 1.1;
+    const recurringOutlay = (
+      result.repeatFingerlingsCost + feedKg * species.feedPriceKg + commonRunning
+    ) * 1.1;
     const sales = harvestKg * priceKg;
+    const firstCycleCashResult = sales - firstCycleOutlay;
     const cashSurplus = sales - recurringOutlay;
-    const paybackSeasons = cashSurplus > 0 ? Math.max(1, Math.ceil(capital / cashSurplus)) : null;
+    // Count seasons until total cumulative farm cash flow becomes nonnegative.
+    // Season 1 uses the actual package; seasons 2+ need fresh fingerlings/feed.
+    const paybackSeasons = firstCycleCashResult >= 0 ? 1
+      : cashSurplus > 0 ? 1 + Math.ceil(-firstCycleCashResult / cashSurplus)
+      : null;
     return {
       label: s.label, survival, fcr, priceKg, fishSold, harvestKg, feedKg,
-      sales, recurringOutlay, cashSurplus, paybackSeasons,
+      sales, firstCycleOutlay, firstCycleCashResult, recurringOutlay,
+      cashSurplus, paybackSeasons,
       paybackMonths: paybackSeasons === null ? null :
         Math.round(paybackSeasons * inputs.cycleDays / 30.4375),
     };
@@ -70,7 +84,8 @@ export function evaluateInvestment(inputs: FarmInputs, result: FarmResult): Inve
   const alternatives = scenarios(inputs, result);
   const base = alternatives[1];
   return {
-    initialCapital: (result.infrastructure + result.initialFillWaterCost) * 1.1,
+    initialCapital: base.firstCycleOutlay,
+    firstCycleCashResult: base.firstCycleCashResult,
     recurringCycleOutlay: base.recurringOutlay,
     cashSurplusPerCycle: base.cashSurplus,
     paybackSeasons: base.paybackSeasons,
