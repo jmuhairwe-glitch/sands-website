@@ -239,12 +239,18 @@ export function generateFarmProposal(
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
   writer.item("Projected fish sales", ugx(farm.projectedSales));
-  writer.item("Recurring cost including 10% reserve", ugx(investment.recurringCycleOutlay));
-  writer.item("Expected season cash surplus", ugx(investment.cashSurplusPerCycle));
-  writer.item("First-season total cost incl. reserve", ugx(investment.initialCapital));
-  writer.item("First-season harvest minus all outlays", ugx(investment.firstCycleCashResult));
-  writer.item("Estimated payback period", payback(investment.paybackSeasons, investment.paybackMonths));
-  writer.paragraph("Payback means the complete production season when cumulative cash flow first becomes nonnegative. The first cycle counts the inclusive SANDS package and only feed AFTER the starter bag; repeat cycles must purchase replacement fingerlings and ALL feed. A 10% cost allowance is included, but the estimate excludes loan interest/repayments, taxes, depreciation, land rent, major repairs and other unpriced costs. The assumed 1.3 feed conversion ratio for the planned offals/bran/maize feed MUST be validated before a lender relies on the projection.");
+  writer.item("Total first-season cash outlay", ugx(investment.initialCapital));
+  writer.item("Fish sales at first harvest", ugx(farm.projectedSales));
+  writer.item("First-season net after ALL setup costs", ugx(investment.firstCycleCashResult));
+  writer.item("Repeat-season cost incl. reserve", ugx(investment.recurringCycleOutlay));
+  writer.item("Repeat-season cash result", ugx(investment.cashSurplusPerCycle));
+  writer.item("Cumulative cash break-even season", payback(investment.paybackSeasons, investment.paybackMonths));
+  writer.heading("SEASON-BY-SEASON CAPITAL RECOVERY");
+  investment.cashFlow.forEach(s => {
+    writer.item("Season " + s.season + (s.season === 1 ? " (includes original package)" : " (repeat inputs)"),
+      "Net " + ugx(s.seasonCashResult) + ", cumulative " + ugx(s.cumulativeCash));
+  });
+  writer.paragraph("First-season net is fish sales LESS the full tank/equipment package, any separate backup power, additional feed after the bundled starter bag, electricity, testing, support, priced water and contingency. Repeat seasons must buy replacement fingerlings and ALL feed. Payback is reached only when the cumulative cash balance becomes nonnegative. It excludes loan interest/repayments, taxes, major repairs, land, unpriced labour, harvesting, transport and any water cost not entered. The assumed 1.3 FCR and 500kg/tank output must be validated before lender use.");
 
   writer.heading("6. PRICE & PRODUCTION SENSITIVITY");
   investment.scenarios.forEach(s => {
@@ -252,7 +258,7 @@ export function generateFarmProposal(
       "% survival, FCR " + s.fcr.toFixed(2) + ", sale price " + ugx(s.priceKg) +
       "/kg; harvest " + quantity(s.harvestKg, 1) + " kg; revenue " + ugx(s.sales) +
       "; first-season cash net " + ugx(s.firstCycleCashResult) + "; repeat-season cash surplus " + ugx(s.cashSurplus) +
-      "; equipment payback " + payback(s.paybackSeasons, s.paybackMonths) + ".");
+      "; cumulative recovery " + payback(s.paybackSeasons, s.paybackMonths) + ".");
   });
 
   writer.heading("7. PROPOSED FUNDING ARRANGEMENT");
