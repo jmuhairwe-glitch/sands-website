@@ -23,6 +23,15 @@ export type Scenario = {
   paybackMonths: number | null;
 };
 
+export type SeasonCashFlow = {
+  season: number;
+  sales: number;
+  totalOutlay: number;
+  seasonCashResult: number;
+  cumulativeCash: number;
+  recovered: boolean;
+};
+
 export type InvestmentAnalysis = {
   initialCapital: number; // total first-cycle outlay, not unbundled hardware price
   firstCycleCashResult: number;
@@ -31,6 +40,7 @@ export type InvestmentAnalysis = {
   paybackSeasons: number | null;
   paybackMonths: number | null;
   scenarios: Scenario[];
+  cashFlow: SeasonCashFlow[];
 };
 
 function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
@@ -83,7 +93,22 @@ function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
 export function evaluateInvestment(inputs: FarmInputs, result: FarmResult): InvestmentAnalysis {
   const alternatives = scenarios(inputs, result);
   const base = alternatives[1];
+  // Show the same first-season full equipment/package outlay used by the PDF;
+  // follow with fresh fish, full feed and other recurring costs each season.
+  // Positive cash during a season does not mean the startup investment was
+  // repaid until cumulative cash flow reaches zero.
+  let cumulative = 0;
+  const seasonCount = Math.max(5, Math.min(8, base.paybackSeasons ?? 5));
+  const cashFlow: SeasonCashFlow[] = Array.from({ length: seasonCount }, (_, i) => {
+    const season = i + 1;
+    const totalOutlay = season === 1 ? base.firstCycleOutlay : base.recurringOutlay;
+    const seasonCashResult = base.sales - totalOutlay;
+    cumulative += seasonCashResult;
+    return { season, sales: base.sales, totalOutlay, seasonCashResult,
+      cumulativeCash: cumulative, recovered: cumulative >= 0 };
+  });
   return {
+    cashFlow,
     initialCapital: base.firstCycleOutlay,
     firstCycleCashResult: base.firstCycleCashResult,
     recurringCycleOutlay: base.recurringOutlay,
