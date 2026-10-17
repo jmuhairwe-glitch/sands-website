@@ -25,6 +25,7 @@ export type FarmInputs = {
   aerationWattsPerTank: number; // SANDS-reported aerator draw, model assumes one aerator per tank
   waterExchangePct: number; // fresh water replaced daily, minimum 20% of working volume
   waterCostPer1000L: number; // UGX per 1,000 L, 0 means water acquisition cost unpriced
+  starterBagKgPerTank: number; // assumed bag size, SANDS still to confirm
 };
 export type FarmResult = {
   feasible: boolean;
@@ -50,9 +51,17 @@ export type FarmResult = {
   waterExchangeCost: number;
   initialFillWaterCost: number;
   waterSupplyCost: number;
-  infrastructure: number;
-  fingerlingsCost: number;
-  feedCost: number;
+  infrastructure: number; // purchased package(s), plus any explicit extra backup allowance
+  isSandsPackage: boolean;
+  packageCost: number; // confirmed package selling price, excluding extra backup
+  backupAllowance: number;
+  includedFingerlings: number;
+  includedStarterFeedKg: number;
+  additionalFeedKg: number;
+  repeatFingerlingsCost: number;
+  repeatFeedCost: number;
+  fingerlingsCost: number; // additional first-cycle fingerlings outside package
+  feedCost: number; // additional first-cycle feed outside included starter bag
   energyCost: number;
   supportCost: number;
   waterTestingCost: number;
@@ -67,7 +76,7 @@ export type FarmResult = {
 };
 
 export const SPECIES = {
-  catfish: { label: "African catfish", densityKgM3: 160, feedPriceKg: 3000, fingerlingPrice: 500, defaultFcr: 1.3, defaultHarvestKg: 1, defaultSalePriceKg: 15000 },
+  catfish: { label: "African catfish", densityKgM3: 160, feedPriceKg: 2500, fingerlingPrice: 500, defaultFcr: 1.3, defaultHarvestKg: 1, defaultSalePriceKg: 15000 },
   tilapia: { label: "Tilapia", densityKgM3: 20, feedPriceKg: 2900, fingerlingPrice: 500, defaultFcr: 1.5, defaultHarvestKg: .6, defaultSalePriceKg: 10000 },
 } as const;
 
@@ -78,7 +87,7 @@ export const DEFAULTS: FarmInputs = {
   fcr: 1.3, survival: .85, harvestKgEach: 1, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
   pumpWatts: 300, aerationWattsPerTank: 40,
-  waterExchangePct: 20, waterCostPer1000L: 0,
+  waterExchangePct: 20, waterCostPer1000L: 0, starterBagKgPerTank: 25,
 };
 
 // SANDS circular tank: 2 m diameter x 1.2 m physical height. Brimful: ~3,770 L.
@@ -92,6 +101,7 @@ export const SANDS_TANK = {
   tanksPerPump: 6, targetTurnoversPerHour: 1.25,
   filterCost: 600000, aerationCost: 350000, aerationPowerWatts: 40, pipingInstallCost: 350000,
   catfishHarvestTargetPerTank: 500,
+  singleTankPackage: 5000000, multiTankPackagePerTank: 3500000,
 } as const;
 
 const clean = (n: number, fallback: number, lower: number, upper: number) =>
@@ -151,6 +161,10 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   // Until other tank sizes are quoted, scale component cost approximately by working volume.
   // Pump is a shared unit, NOT automatically one pump per tank.
   const relativeTankSize = litresPerTank / SANDS_TANK.workingLitres;
+  const isSandsPackage = !isExisting && inputs.species === "catfish" && litresPerTank === SANDS_TANK.workingLitres;
+  const packageCost = isSandsPackage
+    ? count === 1 ? SANDS_TANK.singleTankPackage : count * SANDS_TANK.multiTankPackagePerTank
+    : 0;
   const standardUnitCost = SANDS_TANK.tankCost + SANDS_TANK.filterCost +
     SANDS_TANK.aerationCost + SANDS_TANK.pipingInstallCost;
   // SANDS shares ONE 30,000 L/hour pump across up to SIX standard tanks.
@@ -166,17 +180,33 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const flowPerTankLph = nominalPumpLph / count;
   // UGX 1.2m is an UNCONFIRMED backup-power allowance, not supplied pricing.
   const provisionalBackupAllowance = 1200000;
+  // These SANDS package prices already include tanks, one shared pump up
+  // to six tanks, filtration, aeration, installation, initial fingerlings,
+  // and a starter feed bag per tank. Never bill these components twice.
+  // Backup power is listed separately, pending confirmation of its price.
+  const backupAllowance = isExisting && inputs.backupPresent ? 0 : provisionalBackupAllowance;
   const infrastructure = isExisting
     ? (inputs.biofilterPresent ? 0 : SANDS_TANK.filterCost * count * relativeTankSize)
       + (inputs.aerationPresent ? 0 : SANDS_TANK.aerationCost * count * relativeTankSize)
       + ((!inputs.biofilterPresent || !inputs.aerationPresent) ? SANDS_TANK.pipingInstallCost * count : 0)
-      + (inputs.backupPresent ? 0 : provisionalBackupAllowance)
-    : count * standardUnitCost * relativeTankSize
-      + pumpUnits * SANDS_TANK.pumpCost
-      + provisionalBackupAllowance;
+      + backupAllowance
+    : isSandsPackage
+      ? packageCost + backupAllowance
+      : count * standardUnitCost * relativeTankSize
+        + pumpUnits * SANDS_TANK.pumpCost
+        + backupAllowance;
 
-  const fingerlingsCost = fishStocked * species.fingerlingPrice;
-  const feedCost = feedKg * species.feedPriceKg;
+  const includedFingerlings = isSandsPackage ? fishStocked : 0;
+  // Starter bag is included in the package. Its size remains unconfirmed;
+  // 25kg is an editable ILLUSTRATIVE DEFAULT, not a confirmed SANDS bag size.
+  const includedStarterFeedKg = isSandsPackage
+    ? Math.min(feedKg, count * clean(inputs.starterBagKgPerTank, 25, 0, 100))
+    : 0;
+  const additionalFeedKg = Math.max(0, feedKg - includedStarterFeedKg);
+  const fingerlingsCost = isSandsPackage ? 0 : fishStocked * species.fingerlingPrice;
+  const repeatFingerlingsCost = fishStocked * species.fingerlingPrice;
+  const feedCost = additionalFeedKg * species.feedPriceKg;
+  const repeatFeedCost = feedKg * species.feedPriceKg;
   // Pump input is SANDS-reported 300 W per shared pump; this is separate
   // from the 30,000 L/h nominal hydraulic rating. SANDS reports a 40 W
   // aerator. The model provisionally assumes one 40 W aerator per tank.
@@ -198,7 +228,13 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   warnings.push("Daily new-water exchange is additional to internal recirculation; approximately the same volume must be drained or discharged to hold the water level constant.");
   if (isExisting && effectiveFlow < nominalPumpLph) warnings.push("Reported circulation is below the preliminary turnover screen; fish numbers have been reduced. Check pump head and actual flow.");
   if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
-  if (!isExisting) warnings.push("One nominal 30,000 L/h pump is costed for up to six standard tanks. Its actual delivered flow at installed head, valve allocation, bypass route and power draw must be confirmed.");
+  if (!isExisting) warnings.push("One nominal 30,000 L/h pump is included in the SANDS package for up to six standard tanks. Its delivered flow at installed head, valve allocation, bypass route and electrical draw must be confirmed.");
+  if (isSandsPackage) {
+    warnings.push("SANDS catfish package price includes the pump, tank, aerator, UGX 600,000 per-tank filtration, piping/install, initial fingerlings, and one starter feed bag per tank. No extra charges were added for these items.");
+    warnings.push("Starter feed bag weight " + clean(inputs.starterBagKgPerTank, 25, 0, 100) + " kg per tank is an UNCONFIRMED example. Confirm actual bag size and fingerling count included in the package.");
+    if (count > SANDS_TANK.tanksPerPump) warnings.push("Seven or more tanks need additional shared pump(s); the UGX 3.5m per tank bundle beyond six tanks needs individual supplier verification.");
+  }
+  if (!isExisting && inputs.species !== "catfish") warnings.push("The UGX 5m/3.5m catfish package pricing has not been confirmed for tilapia; current tilapia installation remains a provisional component estimate.");
   if (!isExisting && provisionalBypassFlowLph > 0) warnings.push("Nominal flow not directed to grow-out tanks (" + Math.round(provisionalBypassFlowLph).toLocaleString("en-UG") + " L/h) is assumed routed to the aerating/filter return. This bypass is not guaranteed additional dissolved oxygen and must not short-circuit treatment.");
   warnings.push("SANDS reports 300 W for each shared circulation pump and 40 W for each aerator. This estimate assumes one aerator per tank; confirm whether aerators are actually shared, and verify actual power draw. Backup power UGX 1,200,000, support, testing and contingency remain unconfirmed allowances.");
   if (inputs.species === "catfish") {
@@ -221,7 +257,10 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     dailyFreshWaterLitres, cycleExchangeWaterLitres, initialFillLitres,
     firstCycleFreshWaterLitres, dailyDischargeLitres,
     waterExchangeCost, initialFillWaterCost, waterSupplyCost,
-    infrastructure, fingerlingsCost, feedCost, energyCost, supportCost,
+    infrastructure, isSandsPackage, packageCost, backupAllowance,
+    includedFingerlings, includedStarterFeedKg, additionalFeedKg,
+    repeatFingerlingsCost, repeatFeedCost,
+    fingerlingsCost, feedCost, energyCost, supportCost,
     waterTestingCost, runningCost, contingency, projectTotal,
     amountRemaining: budget - projectTotal, projectedSales, cycleOperatingMargin,
     firstCycleCashResult: projectedSales - projectTotal, warnings,
