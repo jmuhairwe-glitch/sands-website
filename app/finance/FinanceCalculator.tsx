@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { DEFAULTS, SPECIES, simulateFarm, ugx, quantity, type FarmInputs, type Species } from "../../lib/farm-finance";
+import { DEFAULTS, SPECIES, SANDS_TANK, simulateFarm, ugx, quantity, type FarmInputs, type Species } from "../../lib/farm-finance";
 import { evaluateInvestment } from "../../lib/farm-investment";
 
 const moneyNumber = (n: number) => Number.isFinite(n) ? Math.round(n) : 0;
@@ -106,7 +106,7 @@ export default function FinanceCalculator() {
             <label htmlFor="fishSpecies">Fish species</label>
             <select id="fishSpecies" value={inputs.species} onChange={(e) => {
               const species = e.target.value as Species;
-              set({ species, fcr: SPECIES[species].defaultFcr, harvestKgEach: SPECIES[species].defaultHarvestKg });
+              set({ species, fcr: SPECIES[species].defaultFcr, harvestKgEach: SPECIES[species].defaultHarvestKg, salePriceKg: SPECIES[species].defaultSalePriceKg });
             }}>
               <option value="catfish">African catfish</option><option value="tilapia">Tilapia</option>
             </select>
@@ -114,18 +114,14 @@ export default function FinanceCalculator() {
 
           {isNew ? (
             <div className="financeField">
-              <label htmlFor="newTankVolume">Preferred tank size</label>
-              <select id="newTankVolume" value={inputs.tankLitres} onChange={(e) => set({ tankLitres: Number(e.target.value) })}>
-                <option value={2000}>2,000 litres per tank</option>
-                <option value={3000}>3,000 litres per tank</option>
-                <option value={5000}>5,000 litres per tank</option>
-              </select>
-              <small>The slider finds the largest complete first-cycle setup that fits your budget, using provisional per-tank equipment allowances.</small>
+              <label>SANDS standard circular tank</label>
+              <p><strong>{SANDS_TANK.diameterM} m diameter × {SANDS_TANK.wallHeightM} m high</strong> — about {quantity(SANDS_TANK.brimfulLitres)} L at the rim; this estimate uses <strong>{quantity(SANDS_TANK.workingLitres)} L</strong> at a provisional {SANDS_TANK.assumedWaterDepthM.toFixed(1)} m operating depth.</p>
+              <small>Current tank equipment pricing applies to this standard tank. We must verify actual operating water depth and the complete filtration design before quoting.</small>
             </div>
           ) : (
             <>
               <div className="financeTwoCol">
-                <div className="financeField"><label htmlFor="existingVolume">Litres per tank</label>
+                <div className="financeField"><label htmlFor="existingVolume">Working litres per tank</label>
                   <Numeric id="existingVolume" value={inputs.tankLitres} min={500} max={100000}
                     step={100} onChange={(tankLitres) => set({ tankLitres })} /></div>
                 <div className="financeField"><label htmlFor="existingCount">Number of tanks</label>
@@ -155,7 +151,7 @@ export default function FinanceCalculator() {
               <div className="financeField"><label htmlFor="cycleDays">Cycle length (days)</label><Numeric id="cycleDays" value={inputs.cycleDays} min={90} max={365} step={10} onChange={(cycleDays) => set({ cycleDays })}/></div>
               <div className="financeField"><label htmlFor="powerTariff">Electricity (UGX/kWh)</label><Numeric id="powerTariff" value={inputs.electricityTariff} min={100} max={2500} step={50} onChange={(electricityTariff) => set({ electricityTariff })}/></div>
             </div>
-            <p className="financeMuted">Default survival, densities, energy use and capital prices are screening assumptions, not guarantees. Current fingerling and feed price references are UGX 500/fish and {ugx(profile.feedPriceKg)}/kg.</p>
+            <p className="financeMuted">SANDS catfish selling price and feed/equipment costs have been updated from supplied figures; survival, stocking-weight, energy use, operating water depth, and safe filtration capacity still require confirmation. Fingerlings remain UGX 500/fish pending confirmation, and feed is {ugx(profile.feedPriceKg)}/kg.</p>
           </details>
         </section>
 
@@ -181,6 +177,7 @@ export default function FinanceCalculator() {
             <div className="financeCost"><span>Support and training allowance</span><b>{ugx(result.supportCost)}</b></div>
             <div className="financeCost"><span>Water testing and supplies</span><b>{ugx(result.waterTestingCost)}</b></div>
             <div className="financeCost"><span>10% contingency</span><b>{ugx(result.contingency)}</b></div>
+            {isNew && <p className="financeMuted">SANDS component prices: tank {ugx(SANDS_TANK.tankCost)}, filter {ugx(SANDS_TANK.filterCost)}, aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)} per tank; shared pump {ugx(SANDS_TANK.pumpCost)} (reported {quantity(SANDS_TANK.pumpFlowLph)} L/h). Backup power {ugx(1200000)} is only a provisional allowance. Actual pump power, filtration capacity, site work and running costs still need confirmation.</p>}
             <div className="financeTotal"><span>Total estimated project</span><strong>{ugx(result.projectTotal)}</strong></div>
             <div className="financeMeter" aria-label="Percentage of your budget used"><span style={{ width: Math.min(100, budgetUsedPercent) + "%" }} /></div>
             <p className={result.amountRemaining < 0 ? "financeShortfall" : "financeMuted"}>
