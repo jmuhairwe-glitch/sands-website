@@ -11,6 +11,7 @@ const numeric: (keyof FarmInputs)[] = [
   "survival", "harvestKgEach", "salePriceKg", "cycleDays", "electricityTariff",
   "pumpWatts", "aerationWattsPerTank", "waterExchangePct", "waterCostPer1000L",
   "starterBagKgPerTank", "otherSeasonCost", "upgradedTankExtraCostPerTank", "extraFiltrationBudget",
+  "availableNewWaterLpd",
 ];
 const flags: (keyof FarmInputs)[] = ["biofilterPresent", "aerationPresent", "backupPresent"];
 const text = (x: unknown, limit: number) =>
@@ -47,6 +48,10 @@ export async function POST(request: NextRequest) {
     }
     input.mode = given.mode as FarmInputs["mode"];
     input.species = given.species as keyof typeof SPECIES;
+    if (!["piped", "borehole", "other", "unspecified"].includes(String(given.waterSource))) {
+      return NextResponse.json({ error: "Invalid water source" }, { status: 400 });
+    }
+    input.waterSource = given.waterSource as FarmInputs["waterSource"];
     for (const flag of flags) {
       (input as unknown as Record<string, boolean>)[flag] = given[flag] === true;
     }
@@ -67,7 +72,8 @@ export async function POST(request: NextRequest) {
         input.starterBagKgPerTank < 0 || input.starterBagKgPerTank > 100 ||
         input.otherSeasonCost < 0 || input.otherSeasonCost > 100000000 ||
         input.upgradedTankExtraCostPerTank < 0 || input.upgradedTankExtraCostPerTank > 10000000 ||
-        input.extraFiltrationBudget < 0 || input.extraFiltrationBudget > 50000000) {
+        input.extraFiltrationBudget < 0 || input.extraFiltrationBudget > 50000000 ||
+        input.availableNewWaterLpd < 0 || input.availableNewWaterLpd > 100000000) {
       return NextResponse.json({ error: "One or more values are outside the planning limits" }, { status: 400 });
     }
     const ownContribution = details.contribution;
