@@ -278,6 +278,7 @@ export default function FinanceCalculator() {
             <button type="button" className="financeDownload" disabled={isDownloading} onClick={downloadProposal}>
               {isDownloading ? "Preparing PDF..." : "Download My Funding Proposal (PDF) ↓"}
             </button>
+            <p className="financeSampleLink"><a href="/api/finance-proposal?sample=1">Download an example proposal (PDF)</a></p>
             {proposalError && <p role="alert" className="financeShortfall">{proposalError}</p>}
             <p className="financeMuted">PDF figures are recalculated by SANDS' server when you download. Details are used to generate the PDF and are not saved to a SANDS customer database. This proposal is an early estimate, not a bank application or final quotation.</p>
           </div>
