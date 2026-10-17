@@ -1,4 +1,4 @@
-import { ugx, quantity, SPECIES, type FarmInputs, type FarmResult } from "./farm-finance";
+import { ugx, quantity, SPECIES, SANDS_TANK, type FarmInputs, type FarmResult } from "./farm-finance";
 import { type InvestmentAnalysis } from "./farm-investment";
 
 export type ApplicantDetails = {
@@ -168,7 +168,12 @@ export function generateFarmProposal(
   writer.heading("2. PROJECT DESIGN & STOCKING");
   writer.item("Species", profile.label);
   writer.item("Number of tanks", quantity(farm.tanks));
-  writer.item("Total culture water", quantity(farm.volumeLitres) + " litres");
+  writer.item("Total working culture water", quantity(farm.volumeLitres) + " litres");
+  if (input.mode === "new") {
+    writer.item("SANDS standard tank geometry", "2.0 m diameter x 1.2 m high");
+    writer.item("Brimful volume per tank", quantity(SANDS_TANK.brimfulLitres) + " litres");
+    writer.item("Assumed working fill height", "1.0 m - verify on site");
+  }
   writer.item("Fingerlings needed", quantity(farm.fishStocked));
   writer.item("Assumed survival", (input.survival * 100).toFixed(1) + "%");
   writer.item("Estimated fish harvested", quantity(farm.fishHarvested));
@@ -185,8 +190,7 @@ export function generateFarmProposal(
   writer.item("Testing and water-supply allowance", ugx(farm.waterTestingCost));
   writer.item("Contingency (10%)", ugx(farm.contingency));
   writer.item("Total first-cycle financing need", ugx(farm.projectTotal));
-  writer.note("Cost references: UGX 500 per fingerling; " + ugx(profile.feedPriceKg) +
-    " per kg of feed. Installation, equipment, transport, power and other inputs require local verification. Cost estimates are not contractual supplier prices.");
+  writer.note("SANDS-reported standard equipment prices (UGX): tank 1,100,000; 30,000 L/hour pump 1,500,000; filter 600,000; aeration 350,000; piping/installation 350,000. Pump capacity is shared provisionally across tanks and requires on-site verification. Backup power UGX 1,200,000 and energy/support/testing allowances remain unconfirmed. Feed price: " + ugx(profile.feedPriceKg) + "/kg. Fingerlings UGX 500 each are still provisional. These are not contractual quotations.");
 
   writer.heading("4. FEED & FILTRATION ENGINEERING SCREEN");
   writer.item("Feed conversion ratio (FCR)", input.fcr.toFixed(2));
@@ -200,7 +204,7 @@ export function generateFarmProposal(
     writer.item("Existing biofilter reported", input.biofilterPresent ? "Yes - requires assessment" : "No");
     writer.item("Existing aeration reported", input.aerationPresent ? "Yes - requires assessment" : "No");
   }
-  writer.paragraph("Tank turnover and fish-density calculations are initial screening checks only. Before stocking, a qualified designer must verify actual dissolved-oxygen delivery, hydraulic head, solids capture, biological filter TAN conversion, CO2 removal, pH, alkalinity, emergency power, water availability, and site conditions.");
+  writer.paragraph("The SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful); planning uses ~3,142 L per tank at 1.0 m assumed water depth. Tank turnover and fish-density calculations are screening checks only. Before stocking, verify actual fill depth, dissolved-oxygen delivery, hydraulic head, solids capture, biofilter TAN conversion, CO2 removal, pH, alkalinity, backup power, water availability and site conditions.");
 
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
