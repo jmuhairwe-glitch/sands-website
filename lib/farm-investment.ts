@@ -40,8 +40,13 @@ function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
     const survival = Math.min(.98, Math.max(.5, inputs.survival * s.survivalFactor));
     const fcr = inputs.fcr * s.fcrFactor;
     const priceKg = inputs.salePriceKg * s.priceFactor;
-    // Fish sold must not exceed the tank's design screening density.
-    const fishSold = Math.min(result.fishHarvested, Math.floor(result.fishStocked * survival));
+    // Scenario survival can vary around the base case, but harvest biomass must
+    // stay inside the same culture-volume and recirculation screens.
+    const screenVolume = inputs.mode === "existing"
+      ? Math.min(result.volumeLitres, Math.max(0, inputs.actualFlowLph) / 1.25)
+      : result.volumeLitres;
+    const maxFishByDensity = Math.max(0, Math.floor(screenVolume / 1000 * species.densityKgM3 / inputs.harvestKgEach));
+    const fishSold = Math.min(maxFishByDensity, Math.floor(result.fishStocked * survival));
     const harvestKg = fishSold * inputs.harvestKgEach;
     const feedKg = Math.max(0, (harvestKg - result.fishStocked * .025) * fcr * 1.08);
     const running = result.fingerlingsCost + feedKg * species.feedPriceKg +
