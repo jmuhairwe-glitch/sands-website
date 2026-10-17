@@ -71,6 +71,7 @@ export default function FinanceCalculator() {
     "Requested: on-site assessment and itemised quote.",
   ].join("\n");
   const inquiryUrl = "https://wa.me/256756188061?text=" + encodeURIComponent(request);
+  const feedbackUrl = "https://wa.me/256756188061?text=" + encodeURIComponent("Hello SANDS, I tried the Farm Finance Simulator on sands.co.ug/finance. My feedback:\n1. What worked well: \n2. What confused me: \n3. What I would improve: ");
   const budgetUsedPercent = result.projectTotal / Math.max(1, inputs.budget) * 100;
   return (
     <main className="financePage">
@@ -385,6 +386,11 @@ export default function FinanceCalculator() {
             <p className="financeSampleLink"><a href="/api/finance-proposal?sample=1">Download an example proposal (PDF)</a></p>
             {proposalError && <p role="alert" className="financeShortfall">{proposalError}</p>}
             <p className="financeMuted">PDF figures are recalculated by SANDS' server when you download. Details are used to generate the PDF and are not saved to a SANDS customer database. This proposal is an early estimate, not a bank application or final quotation.</p>
+          </div>
+          <div className="financePanel">
+            <h3>Help us improve this pilot</h3>
+            <p>We are inviting farmers, investors and customers to test this early version. Tell us what was useful, what was confusing, and what you would change. Your budget selections are not automatically included in feedback.</p>
+            <a className="financeRequest" href={feedbackUrl} target="_blank" rel="noreferrer">Send feedback to SANDS on WhatsApp →</a>
           </div>
           <a className="financeRequest" href={inquiryUrl} target="_blank" rel="noreferrer">Request a detailed SANDS quotation →</a>
           <p className="financeFinePrint">Your selections are sent to WhatsApp only if you open the request. No Equity Bank application or loan approval is submitted from this page. Equipment and electricity assumptions need confirmed quotations. A loan product would be added only after a bank partnership is agreed.</p>
