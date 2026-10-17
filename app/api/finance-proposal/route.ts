@@ -90,3 +90,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Could not generate the proposal. Check your entries." }, { status: 400 });
   }
 }
+
+
+// Public, clearly labelled sample for reviewing the PDF layout without entering personal information.
+export async function GET(request: NextRequest) {
+  if (new URL(request.url).searchParams.get("sample") !== "1") {
+    return NextResponse.json({ error: "Use the simulator to prepare your PDF." }, { status: 405 });
+  }
+  const input = { ...DEFAULTS };
+  const result = simulateFarm(input);
+  const sample = generateFarmProposal(input, result, evaluateInvestment(input, result), {
+    name: "SAMPLE APPLICANT",
+    projectName: "Sample Catfish Farming Project",
+    location: "Uganda - site to be assessed",
+    contact: "Not provided",
+    financier: "Prospective lender or investor",
+    contribution: 2_000_000,
+    notes: "SAMPLE ONLY - figures do not represent an approved farm design, quote or loan.",
+  });
+  return new Response(new Uint8Array(sample), {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": "attachment; filename=\"SANDS-Sample-Funding-Proposal.pdf\"",
+      "Cache-Control": "no-store, private",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
