@@ -34,7 +34,7 @@ export default function Home() {
             <a href="#about">About Us</a>
             <a href="#services">Our Services</a>
             <a href="#training">Training</a>
-            <a href="/enquire">Prices & enquiries</a><a href="#contact">Contact</a>
+            <a href="/enquire">Prices & enquiries</a><a href="/finance">Farm simulator</a><a href="#contact">Contact</a>
           </nav>
           <a className="button primary topButton"
              href="https://wa.me/256756188061"
@@ -57,6 +57,7 @@ export default function Home() {
           </p>
           <div className="heroActions">
             <a className="button primary" href={fingerlings} target="_blank" rel="noreferrer">Enquire about fingerlings</a>
+            <a className="button outline" href="/finance">Calculate my farm budget</a>
             <a className="button outline"
                href="#training">
               Explore training
