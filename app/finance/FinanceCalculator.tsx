@@ -181,7 +181,7 @@ export default function FinanceCalculator() {
             <div className="financeCost"><span>Support and training allowance</span><b>{ugx(result.supportCost)}</b></div>
             <div className="financeCost"><span>Water testing and supplies</span><b>{ugx(result.waterTestingCost)}</b></div>
             <div className="financeCost"><span>10% contingency</span><b>{ugx(result.contingency)}</b></div>
-            {isNew && <p className="financeMuted">SANDS component prices: tank {ugx(SANDS_TANK.tankCost)}, filter {ugx(SANDS_TANK.filterCost)}, aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)} per tank; shared pump {ugx(SANDS_TANK.pumpCost)} (reported {quantity(SANDS_TANK.pumpFlowLph)} L/h). Backup power {ugx(1200000)} is only a provisional allowance. The standard UGX 600,000 filtration package is NOT yet certified for a 500 kg/tank production target. Electricity uses an UNCONFIRMED {quantity(inputs.pumpWatts)} W per pump + {quantity(inputs.aerationWattsPerTank)} W/tank; change these in advanced settings to match actual equipment.</p>}
+            {isNew && <p className="financeMuted">SANDS component prices: tank {ugx(SANDS_TANK.tankCost)}, filter {ugx(SANDS_TANK.filterCost)}, aeration {ugx(SANDS_TANK.aerationCost)}, piping/installation {ugx(SANDS_TANK.pipingInstallCost)} per tank. <strong>{quantity(result.pumpUnits)} shared pump(s)</strong> are costed at {ugx(SANDS_TANK.pumpCost)} each, with one nominal 30,000 L/h pump for up to six standard tanks. Backup power {ugx(1200000)} is only a provisional allowance. The standard UGX 600,000 filtration package is NOT yet certified for a 500 kg/tank production target. Electricity uses an UNCONFIRMED {quantity(inputs.pumpWatts)} W per pump + {quantity(inputs.aerationWattsPerTank)} W/tank; change these in advanced settings to match actual equipment.</p>}
             <div className="financeTotal"><span>Total estimated project</span><strong>{ugx(result.projectTotal)}</strong></div>
             <div className="financeMeter" aria-label="Percentage of your budget used"><span style={{ width: Math.min(100, budgetUsedPercent) + "%" }} /></div>
             <p className={result.amountRemaining < 0 ? "financeShortfall" : "financeMuted"}>
@@ -194,10 +194,15 @@ export default function FinanceCalculator() {
             <div className="financeMetrics">
               <div><small>Peak daily feed</small><strong>{quantity(result.peakFeedKgDay, 2)} kg/day</strong></div>
               <div><small>Ammonia nitrogen (TAN)</small><strong>{quantity(result.tanGramsDay, 1)} g/day</strong></div>
-              <div><small>Preliminary circulation check</small><strong>{quantity(result.nominalPumpLph)} L/hour</strong></div>
+              <div><small>Total flow allocated to tanks</small><strong>{quantity(result.nominalPumpLph)} L/hour</strong></div>
               <div><small>Estimated oxygen demand</small><strong>{quantity(result.oxygenKgDay, 2)} kg/day</strong></div>
             </div>
-            <p className="financeMuted">Planning factors: 2% peak-day feeding rate, 40 g TAN/kg feed, 0.6 kg O₂/kg feed, and a 1.25× tank-volume/hour circulation screen. These are <strong>not</strong> equipment ratings or safe-stock guarantees. SANDS must size the solids filter, biofilter media, aeration, CO₂ removal and backup power for the actual site.</p>
+            {isNew && <div className="financeMetrics">
+              <div><small>Installed shared pump units</small><strong>{quantity(result.pumpUnits)} × {quantity(SANDS_TANK.pumpFlowLph)} L/h</strong></div>
+              <div><small>Allocated to each tank</small><strong>{quantity(result.flowPerTankLph)} L/h</strong></div>
+              <div><small>Nominal bypass / aerating return</small><strong>{quantity(result.provisionalBypassFlowLph)} L/h</strong></div>
+            </div>}
+            <p className="financeMuted">One 30,000 L/h pump is shared between up to six SANDS standard tanks. Water goes through a distribution manifold; excess nominal capacity may recirculate via the final filtration/aeration stage. The bypass must not short-circuit waste treatment, and does not itself certify oxygen delivery. All flow figures require measurement at operating head. Planning factors: 2% peak-day feeding rate, 40 g TAN/kg feed, 0.6 kg O₂/kg feed, and a 1.25× tank-volume/hour circulation screen. SANDS must size the solids filter, biofilter media, oxygenation, CO₂ removal and backup power for the actual site.</p>
           </div>
 
           <div className="financePanel">
