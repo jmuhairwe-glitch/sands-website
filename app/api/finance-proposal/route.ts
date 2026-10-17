@@ -9,6 +9,7 @@ export const dynamic = "force-dynamic";
 const numeric: (keyof FarmInputs)[] = [
   "budget", "tankLitres", "tankCount", "actualFlowLph", "fcr",
   "survival", "harvestKgEach", "salePriceKg", "cycleDays", "electricityTariff",
+  "pumpWatts", "aerationWattsPerTank",
 ];
 const flags: (keyof FarmInputs)[] = ["biofilterPresent", "aerationPresent", "backupPresent"];
 const text = (x: unknown, limit: number) =>
@@ -57,7 +58,9 @@ export async function POST(request: NextRequest) {
         input.harvestKgEach < .3 || input.harvestKgEach > 2 ||
         input.salePriceKg < 1000 || input.salePriceKg > 50_000 ||
         input.cycleDays < 90 || input.cycleDays > 365 ||
-        input.electricityTariff < 100 || input.electricityTariff > 2500) {
+        input.electricityTariff < 100 || input.electricityTariff > 2500 ||
+        input.pumpWatts < 50 || input.pumpWatts > 10000 ||
+        input.aerationWattsPerTank < 0 || input.aerationWattsPerTank > 3000) {
       return NextResponse.json({ error: "One or more values are outside the planning limits" }, { status: 400 });
     }
     const ownContribution = details.contribution;
