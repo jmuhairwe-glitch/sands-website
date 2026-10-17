@@ -9,7 +9,7 @@
 | Circular tank dimensions | 2.0 m diameter x 1.2 m wall height | SANDS |
 | Brimful capacity | 3,770 L | Derived from cylinder |
 | Provisional working water depth | 1.0 m | **To confirm**; implies 3,142 L working volume |
-| Tank price | UGX 1,100,000 | SANDS |
+| Tank component cost | UGX 1,100,000 | SANDS; internal cost reference, **not an extra charge on the package** |
 | One shared pump price | UGX 1,500,000 | SANDS |
 | Pump nominal/delivered flow reported | 30,000 L/hour | SANDS; confirm at filter/manifold head |
 | Pumps needed | One per **up to six** standard tanks | SANDS layout; confirm duty |
@@ -18,7 +18,7 @@
 | Piping and installation | UGX 350,000 | SANDS; assumed per tank until confirmed |
 | Expected harvest | 500 catfish **per tank** | SANDS production goal, not a stocking clearance |
 | Average harvest fish size | 1.0 kg | SANDS updated goal |
-| Feed | UGX 3,000/kg | SANDS |
+| Feed sold with farm package | **UGX 2,500/kg** | SANDS proposed subsidised price; validate feed formulation and actual costs |
 | Fish sales | UGX 15,000/kg | SANDS assumed realized sales price |
 | Fingerlings | UGX 500/fish | **Unconfirmed**, carried from previous model |
 | FCR | 1.3 | **Unconfirmed**, retained |
@@ -35,6 +35,22 @@
 | Contingency | 10% | Planning allowance |
 | Daily fresh-water exchange | **20% of working volume minimum** | Confirmed by SANDS; separate from internal pump recirculation |
 | Water source cost | UGX 0/1,000 L (UNPRICED) | **To confirm**; the zero input does not imply free water |
+
+## Confirmed inclusive package selling prices (supersedes additive component quoting)
+
+SANDS package price for a NEW standard catfish system:
+- **Exactly one tank: UGX 5,000,000 total.**
+- **Two or more tanks: UGX 3,500,000 per tank (2=7m; 3=10.5m; 6=21m).** No extra pump charge for the first six tanks, and the standard package already includes the tank, pump, aerator, filtration (UGX 600,000 per tank), piping/installation, initial fingerlings, and **one bag of starter feeds per tank**.
+- For budgeting, assume **589 initial fingerlings per tank** to target 500 harvested at 85% survival. This is an interpretation of "fingerlings included"; SANDS needs to verify the package covers the mortality allowance, not simply 500 supplied.
+- Starter bag weight has NOT been provided. Set an **editable 25 kg/tank example**, explicitly labelled unconfirmed, and subtract its assumed weight from the first-cycle purchased feed. **Do not bill it twice.** Customer should not be shown this as a confirmed included quantity.
+- First-season extra feed costs **UGX 2,500/kg**; in later seasons the farmer must purchase new fingerlings and **all** feed. Repeat-cycle fingerling unit price UGX 500 is still unconfirmed.
+- Additional backup power **UGX 1,200,000** is provisionally costed separately as NOT INCLUDED because the package inclusions did not explicitly mention backup power. Verify this with SANDS before issuing quotes.
+- SANDS has stated 1x 30,000 L/hour, 300 W pump can serve up to six tanks. For more than six tanks, obtain an itemised quote for extra pumping/filtration rather than assume the retail package covers scaling indefinitely.
+- The old tank/pump/filter/aerator/piping component numbers are NOT added on top of the confirmed selling package. They may be kept for internal margin analysis only.
+
+Payback now uses cumulative actual cash flows: first cycle incurs inclusive package + separately priced first-season operating inputs; subsequent seasons incur new fingerlings and full feed (and electricity, tests, support, water). Recovery occurs in the first full cycle where accumulated harvest receipts exceed accumulated outlays, excluding loan interest and unpriced costs.
+
+**Technical risk:** 500 fish x 1kg from ~3,142L means ~159kg/m3, which is a HIGH-intensity design TARGET only. Neither the filtration unit price nor 20% water replacement proves its safe oxygen/TAN/solids capacity. Offals + wheat bran + maize formulation is not yet shown to deliver FCR 1.3 or adequate protein/amino acids/minerals/biosecurity. Validate measured feed FCR, nutrient composition, microbial safety, energy use and sale price before bank use.
 
 ## Water circulation
 
@@ -73,7 +89,7 @@ If the 40 W aerator serves multiple tanks, the totals should be reduced accordin
 2. Verify the reported 300 W per shared pump and 40 W per aerator against nameplates or a power meter, and clarify if the aerator is dedicated to one tank or shared. Confirm operating pattern, electricity tariff, backup power type and price.
 3. **Filtration UGX 600k per tank is confirmed**. Verify whether UGX 350k aeration and UGX 350k piping are also per-tank prices and what they physically include.
 4. Actual TAN nitrification and suspended-solids loading capacity of the filter at peak feed. Oxygen transfer at demand, CO2 stripping, alkalinity/pH control and the flow layout for bypass return.
-5. Actual fingerling price and starting weight, observed survival, FCR at 1 kg, duration to reach 1 kg, and whether 500 kg in this standard tank has already been demonstrated.
+5. Confirm included fingerling number per package, starter bag weight (25kg only an example), starter feed quality, actual fingerling replacement price/starting weight, observed survival, achieved FCR with offals/bran/maize feed at 1kg, cycle duration, and whether 500 kg/tank has been demonstrated.
 6. Water source cost per 1,000 L, whether borehole/piped/rainwater, delivery pressure or pumping loads, effluent handling, transport, labour, feed distribution, repairs, permits, harvest handling, mortalities, buyer deductions and realized farm-gate selling price.
 
 No bank, investor, or customer should interpret the model as a certified RAS design or guaranteed returns.
