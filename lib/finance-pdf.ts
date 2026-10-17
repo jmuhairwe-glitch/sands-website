@@ -186,6 +186,8 @@ export function generateFarmProposal(
   writer.item("Fingerlings", ugx(farm.fingerlingsCost));
   writer.item("Full production cycle feed", ugx(farm.feedCost));
   writer.item("Electricity estimate", ugx(farm.energyCost));
+  writer.item("Provisional pump electrical input", quantity(input.pumpWatts) + " W per pump");
+  writer.item("Provisional aeration electrical input", quantity(input.aerationWattsPerTank) + " W per tank");
   writer.item("Support and training allowance", ugx(farm.supportCost));
   writer.item("Testing and water-supply allowance", ugx(farm.waterTestingCost));
   writer.item("Contingency (10%)", ugx(farm.contingency));
@@ -198,13 +200,19 @@ export function generateFarmProposal(
   writer.item("Peak daily feed (screening)", quantity(farm.peakFeedKgDay, 2) + " kg/day");
   writer.item("Indicative ammonia nitrogen load", quantity(farm.tanGramsDay, 1) + " g TAN/day");
   writer.item("Indicative oxygen demand", quantity(farm.oxygenKgDay, 2) + " kg O2/day");
-  writer.item("Turnover screening flow", quantity(farm.nominalPumpLph) + " litres/hour");
+  writer.item("Total flow allocated to tanks", quantity(farm.nominalPumpLph) + " litres/hour");
+  if (input.mode === "new") {
+    writer.item("Shared pumps provisionally costed", quantity(farm.pumpUnits) + " unit(s)");
+    writer.item("Reported nominal pump flow", quantity(farm.nominalInstalledFlowLph) + " litres/hour");
+    writer.item("Water to each tank (planning)", quantity(farm.flowPerTankLph) + " litres/hour");
+    writer.item("Nominal bypass/aerating return", quantity(farm.provisionalBypassFlowLph) + " litres/hour");
+  }
   if (input.mode === "existing") {
     writer.item("Reported delivered flow", quantity(input.actualFlowLph) + " litres/hour");
     writer.item("Existing biofilter reported", input.biofilterPresent ? "Yes - requires assessment" : "No");
     writer.item("Existing aeration reported", input.aerationPresent ? "Yes - requires assessment" : "No");
   }
-  writer.paragraph("The SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful); planning uses ~3,142 L per tank at 1.0 m assumed water depth. Tank turnover and fish-density calculations are screening checks only. Before stocking, verify actual fill depth, dissolved-oxygen delivery, hydraulic head, solids capture, biofilter TAN conversion, CO2 removal, pH, alkalinity, backup power, water availability and site conditions.");
+  writer.paragraph("The SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful); planning uses ~3,142 L per tank at 1.0 m assumed water depth. One reported 30,000 L/h pump is provisionally shared across up to six standard tanks. A manifold directs the required flow to tanks and surplus nominal flow through a return to the final filter/aeration stage. These are NOT measured flows or certified oxygenation. Bypass must not short-circuit biological/solids treatment. Tank turnover and fish-density calculations are screening checks only. Before stocking, verify delivered flow at head, actual fill depth, dissolved-oxygen transfer, biofilter TAN conversion, CO2 removal, backup power, water availability and site conditions.");
 
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
