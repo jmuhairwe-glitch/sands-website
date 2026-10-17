@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 };
 
 const whatsapp = (message: string) => `https://wa.me/256756188061?text=${encodeURIComponent(message)}`;
-const fingerlings = whatsapp("Hello SANDS, I found you on sands.co.ug. Please quote for fingerlings. Species: __. Quantity: __. My location: __. Stocking date: __. Please confirm sizes, prices and collection or delivery options.");
-const training = whatsapp("Hello SANDS, I found you on sands.co.ug. I am interested in practical fish-farming training. Please send the next dates, fees, duration and topics. My experience: __. Number of people: __.");
+const fingerlings = "/enquire?topic=Fingerlings";
+const training = "/enquire?topic=Training";
 const visit = whatsapp("Hello SANDS, I found you on sands.co.ug and would like to arrange a farm visit. Preferred date: __. Number of visitors: __. Purpose: __. Please confirm availability, any fees and directions.");
 const directions = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("SANDS FISH FARM Plot 3A Drake Lane Kanyanya Kampala Uganda");
 
@@ -34,7 +34,7 @@ export default function Home() {
             <a href="#about">About Us</a>
             <a href="#services">Our Services</a>
             <a href="#training">Training</a>
-            <a href="#contact">Contact</a>
+            <a href="/enquire">Prices & enquiries</a><a href="#contact">Contact</a>
           </nav>
           <a className="button primary topButton"
              href="https://wa.me/256756188061"
@@ -80,7 +80,7 @@ export default function Home() {
                 <div className="serviceIcon" aria-hidden="true">{service.icon}</div>
                 <h3>{service.title}</h3>
                 <p>{service.text}</p>
-                <a className="serviceLink" href={service.title.includes("Hatchery") ? fingerlings : service.title.includes("Training") ? training : whatsapp(`Hello SANDS, I found you on sands.co.ug. I would like to enquire about ${service.title}. My location: __. My requirements: __.`)} target="_blank" rel="noreferrer">{service.title.includes("Hatchery") ? "Request sizes & prices" : service.title.includes("Training") ? "Ask about training" : "Discuss your requirements"} →</a>
+                <a className="serviceLink" href={service.title.includes("Hatchery") ? fingerlings : service.title.includes("Training") ? training : (service.title.includes("Feed") ? "/enquire?topic=Fish%20feeds" : service.title.includes("Tank") ? "/enquire?topic=Tanks%20%26%20recycling" : "/enquire?topic=Something%20else")} target="_blank" rel="noreferrer">{service.title.includes("Hatchery") ? "Request sizes & prices" : service.title.includes("Training") ? "Ask about training" : "Discuss your requirements"} →</a>
               </article>
             ))}
           </div>
@@ -124,8 +124,8 @@ export default function Home() {
               <li>Water quality, filtration and everyday tank management</li>
               <li>Hatchery and fingerling management</li>
             </ul>
-            <p>Ask us to confirm the topics, next available dates, duration and fees before booking.</p>
-            <a className="button primary" href={training} target="_blank" rel="noreferrer">Request training dates & fees</a>
+            <p>One day: UGX 100,000 per person or UGX 350,000 for 4–10 people. Two weeks: UGX 1,400,000 per person or UGX 4,900,000 for 4–10, including meals and accommodation. Two-month hatchery training: UGX 5,000,000 plus operational costs. Choose a preferred date; we confirm availability before booking.</p>
+            <a className="button primary" href={training} target="_blank" rel="noreferrer">View prices & choose a date</a>
           </div>
           <aside className="visitPanel">
             <p className="eyebrow blue">VISIT SANDS IN KANYANYA</p>
@@ -144,10 +144,10 @@ export default function Home() {
         <div className="container faqWrap">
           <p className="eyebrow blue">BEFORE YOU ORDER OR VISIT</p>
           <h2 id="questions-title">Common questions</h2>
-          <details><summary>How do I order fingerlings?</summary><p>Send the species, quantity, your location and intended stocking date on WhatsApp. We will confirm available sizes, prices, minimum quantities and collection or delivery arrangements before you order.</p></details>
+          <details><summary>How do I order fingerlings?</summary><p>Catfish and tilapia fingerlings cost UGX 500 each, regardless of collection stage. Use our enquiry page to calculate a total and request your stocking date. Sizes, availability and transport are confirmed before ordering.</p></details>
           <details><summary>Can you help me plan a tank system?</summary><p>Tell us your location, available space, water source and intended production scale. Photos and measurements will help us discuss your requirements and the next steps for an assessment or quotation.</p></details>
           <details><summary>Can I visit without booking?</summary><p>Please call or WhatsApp first to confirm visiting arrangements and a suitable time with the farm team.</p></details>
-          <details><summary>How much is training?</summary><p>Contact us for current fees, dates and duration. Tell us how many people would attend and the topics you want to cover, so we can confirm an appropriate session.</p></details>
+          <details><summary>How much is training?</summary><p>One-day training is UGX 100,000 per person or UGX 350,000 for 4–10 people. Use our enquiry page to compare all courses, calculate your group total and request a date.</p></details>
         </div>
       </section>
 
@@ -178,7 +178,7 @@ export default function Home() {
 
       <div className="mobileContact" aria-label="Contact SANDS">
         <a href="tel:+256772402924">Call SANDS</a>
-        <a href={whatsapp("Hello SANDS, I found you on sands.co.ug. I would like help with: __.")} target="_blank" rel="noreferrer">WhatsApp enquiry</a>
+        <a href="/enquire" target="_blank" rel="noreferrer">Prices & enquiries</a>
       </div>
       <footer className="footer">
         <div className="container footerInner">
