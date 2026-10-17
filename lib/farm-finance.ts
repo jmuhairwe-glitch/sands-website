@@ -246,7 +246,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   if (waterRate > 0) warnings.push("Water unit cost estimates supply only; separately confirm water treatment, source pumping, wastewater handling and any permits/fees.");
   warnings.push("Daily new-water exchange is additional to internal recirculation; approximately the same volume must be drained or discharged to hold the water level constant.");
   if (isExisting && effectiveFlow < nominalPumpLph) warnings.push("Reported circulation is below the preliminary turnover screen; fish numbers have been reduced. Check pump head and actual flow.");
-  if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
+  if (!isExisting && !isSandsPackage) warnings.push("Nonstandard tank dimensions require a separate supplier quotation; equipment costs are only indicative.");
   if (!isExisting) warnings.push("One nominal 50,000 L/h, 500 W pump costing UGX 1.5m is included in the SANDS catfish package for up to six tanks. Actual flow at head, bypass flow, distribution and oxygenation must be verified.");
   if (isSandsPackage) {
     warnings.push("SANDS catfish package includes the pump, tank, aerator, UGX 600,000 per-tank filtration, piping/install, initial fingerlings, and one starter feed bag per tank. These are not charged twice.");
@@ -260,7 +260,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   warnings.push("SANDS reports 300 W for each shared circulation pump and 40 W for each aerator. This estimate assumes one aerator per tank; confirm whether aerators are actually shared, and verify actual power draw. Backup power UGX 1,200,000, support, testing and contingency remain unconfirmed allowances.");
   if (inputs.species === "catfish") {
     const density = harvestKg / Math.max(.001, volumeLitres / 1000);
-    if (density > 100) warnings.push("HIGH-INTENSITY DESIGN: " + Math.round(density) + " kg/m3 expected harvest biomass. This is a proposed output target only. SANDS must verify aeration/oxygen transfer, filtration TAN removal, solids, CO2 stripping, backup and water-quality monitoring. No stocking approval is implied.");
+    if (density >= 90) warnings.push("HIGH-INTENSITY DESIGN: " + Math.round(density) + " kg/m3 expected harvest biomass. This is a proposed output target only. SANDS must verify aeration/oxygen transfer, filtration TAN removal, solids, CO2 stripping, backup and water-quality monitoring. No stocking approval is implied.");
     warnings.push("Catfish project targets 500 fish HARVESTED per standard working-volume tank, with extra fish stocked for mortality at the selected survival rate.");
   }
   warnings.push("1.0 m working water depth is provisional; confirm actual tank water level.");
