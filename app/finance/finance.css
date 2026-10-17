@@ -68,3 +68,30 @@
 .financeFinePrint{font-size:12px;line-height:1.65;color:#718391;margin:16px 0 0}
 @media(max-width:850px){.financeLayout{grid-template-columns:1fr}.financeControls,.financeResults{padding:22px}}
 @media(max-width:450px){.financeHeader nav{gap:12px;font-size:12px}.financeHeader img{width:140px}.financeHero{padding:44px 0 56px}.financeHero p{font-size:16px}.financeLayout{width:calc(100% - 20px);gap:14px}.financeControls,.financeResults{padding:17px}.financeFigures>div{padding:13px}.financeFigures strong{font-size:22px}.financeTotal{align-items:flex-start;flex-direction:column}.financeMetrics{gap:7px}.financeMetrics strong{font-size:15px}}
+
+/* Funding proposal and season-payback extension */
+.financeField input[type=text], .financeField textarea {
+  width:100%;padding:13px;border-radius:10px;border:1px solid #b9cbd6;
+  font:inherit;background:#fff;color:#10233a;min-width:0;
+}
+.financeField input[type=text]:focus,.financeField textarea:focus{
+  outline:3px solid #a9dbc8;outline-offset:1px;
+}
+.financeScenarioTable{border-top:1px solid #dce7ed;margin-top:18px}
+.financeScenarioHeading,.financeScenarioRow{
+  display:grid;grid-template-columns:minmax(76px,.7fr) minmax(115px,1.2fr) minmax(84px,.8fr);
+  align-items:center;gap:8px;padding:12px 0;border-bottom:1px solid #e7edf1;
+  font-size:12px;font-variant-numeric:tabular-nums;
+}
+.financeScenarioHeading{font-weight:700;color:#596e7b;font-size:11px}
+.financeScenarioRow span:nth-child(2){text-align:right}
+.financeScenarioRow strong{text-align:right}
+.financeScenarioRow .financeNegative{color:#b53636}
+.financeProposal{border:2px solid #b7d9ca;background:#f6fbf8;border-radius:16px;padding:22px;margin-top:20px}
+.financeProposal h3{font-size:20px;margin:0 0 9px;color:#07573d}
+.financeProposal>p{line-height:1.55;color:#425b54;font-size:13px;margin:0 0 20px}
+.financeProposal .financeField small{font-size:12px}
+.financeDownload{width:100%;padding:17px 16px;cursor:pointer;border:0;border-radius:12px;background:#077650;color:white;font-size:16px;font-weight:800}
+.financeDownload:hover:not(:disabled){background:#05583b}
+.financeDownload:disabled{opacity:.65;cursor:wait}
+@media(max-width:450px){.financeProposal{padding:15px}.financeScenarioHeading,.financeScenarioRow{font-size:10px;gap:5px;grid-template-columns:1fr 1.15fr .85fr}}
