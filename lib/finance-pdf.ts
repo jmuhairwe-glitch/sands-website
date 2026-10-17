@@ -187,13 +187,13 @@ export function generateFarmProposal(
   writer.item("Full production cycle feed", ugx(farm.feedCost));
   writer.item("Electricity estimate", ugx(farm.energyCost));
   writer.item("SANDS-reported shared pump power", quantity(input.pumpWatts) + " W per pump");
-  writer.item("Provisional aerator electric input", quantity(input.aerationWattsPerTank) + " W per tank");
+  writer.item("SANDS-reported aerator rating", quantity(input.aerationWattsPerTank) + " W per aerator");
   writer.item("Support and training allowance", ugx(farm.supportCost));
   writer.item("Water testing and supplies", ugx(farm.waterTestingCost));
   writer.item("Fresh water (first fill + exchange)", ugx(farm.waterSupplyCost) + (input.waterCostPer1000L === 0 ? " - unpriced" : ""));
   writer.item("Contingency (10%)", ugx(farm.contingency));
   writer.item("Total first-cycle financing need", ugx(farm.projectTotal));
-  writer.note("SANDS-reported standard prices (UGX): tank 1,100,000 PER TANK; mechanical and biological filtration 600,000 PER TANK (confirmed); aeration 350,000 and piping/installation 350,000 provisionally costed per tank; ONE 30,000 L/hour pump costing 1,500,000 shared across up to six tanks. Check delivered flow at installed head. Pump electrical input is SANDS-reported as 300 W per shared pump; confirm measured draw. Backup power 1,200,000, aerator electrical input, support, testing and source-water charges are not yet verified. Feed: " + ugx(profile.feedPriceKg) + "/kg. Fingerlings 500 each still provisional. These are not contractual quotations.");
+  writer.note("SANDS-reported standard prices (UGX): tank 1,100,000 PER TANK; mechanical and biological filtration 600,000 PER TANK (confirmed); aeration 350,000 and piping/installation 350,000 provisionally costed per tank; ONE 30,000 L/hour pump costing 1,500,000 shared across up to six tanks. Check delivered flow at installed head. Pump electrical input is SANDS-reported as 300 W per shared pump; confirm measured draw. Aerator power is SANDS-reported as 40 W each and the model assumes one aerator per tank; confirm whether shared. Backup power 1,200,000, support, testing and source-water charges are not yet verified. Feed: " + ugx(profile.feedPriceKg) + "/kg. Fingerlings 500 each still provisional. These are not contractual quotations.");
 
   writer.heading("4. FEED & FILTRATION ENGINEERING SCREEN");
   writer.item("Feed conversion ratio (FCR)", input.fcr.toFixed(2));
