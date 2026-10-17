@@ -26,6 +26,7 @@ export type FarmInputs = {
   waterExchangePct: number; // fresh water replaced daily, minimum 20% of working volume
   waterCostPer1000L: number; // UGX per 1,000 L, 0 means water acquisition cost unpriced
   starterBagKgPerTank: number; // assumed bag size, SANDS still to confirm
+  otherSeasonCost: number; // editable unpriced labour, harvesting, freight and repairs per cycle
 };
 export type FarmResult = {
   feasible: boolean;
@@ -51,6 +52,7 @@ export type FarmResult = {
   waterExchangeCost: number;
   initialFillWaterCost: number;
   waterSupplyCost: number;
+  otherSeasonCost: number;
   infrastructure: number; // purchased package(s), plus any explicit extra backup allowance
   isSandsPackage: boolean;
   packageCost: number; // confirmed package selling price, excluding extra backup
@@ -88,6 +90,7 @@ export const DEFAULTS: FarmInputs = {
   cycleDays: 180, electricityTariff: 850,
   pumpWatts: 300, aerationWattsPerTank: 40,
   waterExchangePct: 20, waterCostPer1000L: 0, starterBagKgPerTank: 25,
+  otherSeasonCost: 0,
 };
 
 // SANDS circular tank: 2 m diameter x 1.2 m physical height. Brimful: ~3,770 L.
@@ -216,13 +219,15 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     clean(inputs.electricityTariff, 850, 100, 2500);
   const supportCost = 400000 + 180000 * count;
   const waterTestingCost = 250000 + 120000 * count;
-  const runningCost = fingerlingsCost + feedCost + energyCost + supportCost + waterTestingCost + waterSupplyCost;
+  const otherSeasonCost = clean(inputs.otherSeasonCost, 0, 0, 100000000);
+  const runningCost = fingerlingsCost + feedCost + energyCost + supportCost + waterTestingCost + waterSupplyCost + otherSeasonCost;
   const contingency = (infrastructure + runningCost) * .10;
   const projectTotal = infrastructure + runningCost + contingency;
   const budget = clean(inputs.budget, 15000000, 0, 500000000);
   const projectedSales = harvestKg * clean(inputs.salePriceKg, 10000, 1000, 50000);
   const cycleOperatingMargin = projectedSales - runningCost;
   const warnings: string[] = [];
+  if (otherSeasonCost === 0) warnings.push("Labour, fish harvesting, delivery/marketing, maintenance and other farm expenses have NOT been priced. Add realistic per-cycle costs before treating the payback figures as usable for lending.");
   if (waterRate === 0) warnings.push("Daily 20%-or-higher fresh water replacement is included as a quantity, but water acquisition/discharge costs are UNPRICED (UGX 0/1,000 L). Add the true water cost or own-source pumping/treatment expense.");
   if (waterRate > 0) warnings.push("Water unit cost estimates supply only; separately confirm water treatment, source pumping, wastewater handling and any permits/fees.");
   warnings.push("Daily new-water exchange is additional to internal recirculation; approximately the same volume must be drained or discharged to hold the water level constant.");
@@ -256,7 +261,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     pumpUnits, nominalInstalledFlowLph, provisionalBypassFlowLph, flowPerTankLph,
     dailyFreshWaterLitres, cycleExchangeWaterLitres, initialFillLitres,
     firstCycleFreshWaterLitres, dailyDischargeLitres,
-    waterExchangeCost, initialFillWaterCost, waterSupplyCost,
+    waterExchangeCost, initialFillWaterCost, waterSupplyCost, otherSeasonCost,
     infrastructure, isSandsPackage, packageCost, backupAllowance,
     includedFingerlings, includedStarterFeedKg, additionalFeedKg,
     repeatFingerlingsCost, repeatFeedCost,
