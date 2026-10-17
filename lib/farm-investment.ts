@@ -63,7 +63,7 @@ function scenarios(inputs: FarmInputs, result: FarmResult): Scenario[] {
     const harvestKg = fishSold * inputs.harvestKgEach;
     const feedKg = Math.max(0, (harvestKg - result.fishStocked * .025) * fcr * 1.08);
     const additionalFirstFeedKg = Math.max(0, feedKg - result.includedStarterFeedKg);
-    const commonRunning = result.energyCost + result.supportCost + result.waterTestingCost + result.waterExchangeCost;
+    const commonRunning = result.energyCost + result.supportCost + result.waterTestingCost + result.waterExchangeCost + result.otherSeasonCost;
     const firstCycleOutlay = (
       result.infrastructure + result.fingerlingsCost
       + additionalFirstFeedKg * species.feedPriceKg
