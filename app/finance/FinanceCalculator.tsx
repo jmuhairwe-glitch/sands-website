@@ -238,34 +238,48 @@ export default function FinanceCalculator() {
           </div>
 
           <div className="financePanel">
-            <h3>Possible sales — and the real cost</h3>
-            <div className="financeCost"><span>Projected fish sales</span><b>{ugx(result.projectedSales)}</b></div>
-            <div className="financeCost"><span>Less cycle running costs</span><b>− {ugx(result.runningCost)}</b></div>
-            <div className="financeTotal"><span>Illustrative operating margin</span><strong className={result.cycleOperatingMargin < 0 ? "financeNegative" : ""}>{ugx(result.cycleOperatingMargin)}</strong></div>
-            <p className="financeMuted">Before installation cost recovery, financing repayments, taxes, land, transport, salaries outside the allowance, depreciation or unexpected losses. First-cycle cash position after all modeled setup costs and contingency: <strong>{ugx(result.firstCycleCashResult)}</strong>. The business case must consider repeated cycles.</p>
+            <h3>First harvest: did I recover my startup investment?</h3>
+            <p className="financeMuted">This calculation subtracts the complete first-season farm purchase (including all tanks, pump and filtration supplied in the package), plus additional feed, electricity, support, water testing, estimated water charges and contingency.</p>
+            <div className="financeCost"><span>Harvest sales (estimated)</span><b>{ugx(result.projectedSales)}</b></div>
+            <div className="financeCost"><span>Less: full first-season investment INCLUDING tanks and installation</span><b>− {ugx(investment.initialCapital)}</b></div>
+            <div className="financeTotal"><span>{investment.firstCycleCashResult >= 0 ? "Cash left after recovering all modeled startup costs" : "Unrecovered investment after first harvest"}</span><strong className={investment.firstCycleCashResult < 0 ? "financeNegative" : ""}>{ugx(investment.firstCycleCashResult)}</strong></div>
+            <p className="financeMuted">A negative amount means the farmer has NOT recovered the startup investment. A positive amount means modeled first-season cash receipts exceed ALL entered costs, not that SANDS guarantees profit. Actual water-source expense, labour, transport, harvesting, financing, and engineering compliance costs must still be verified.</p>
           </div>
 
           <div className="financePanel">
             <h3>Investment recovery & payback</h3>
             <div className="financeMetrics">
-              <div><small>First-season total investment</small><strong>{ugx(investment.initialCapital)}</strong></div>
+              <div><small>First season: entire setup + running costs</small><strong>{ugx(investment.initialCapital)}</strong></div>
               <div><small>Net after first-season harvest</small><strong>{ugx(investment.firstCycleCashResult)}</strong></div>
-              <div><small>Estimated net cash / repeat season</small><strong>{ugx(investment.cashSurplusPerCycle)}</strong></div>
-              <div><small>Payback in full seasons</small><strong>{investment.paybackSeasons === null ? "No payback" : investment.paybackSeasons + " season(s)"}</strong></div>
+              <div><small>Cash left in later seasons, before prior losses</small><strong>{ugx(investment.cashSurplusPerCycle)}</strong></div>
+              <div><small>First season with all startup money recovered</small><strong>{investment.paybackSeasons === null ? "Not recovered" : "Season " + investment.paybackSeasons}</strong></div>
               <div><small>Approximate elapsed time</small><strong>{investment.paybackMonths === null ? "Not recovered" : investment.paybackMonths + " months"}</strong></div>
             </div>
             <p className="financeMuted">Payback is the number of complete {inputs.cycleDays}-day production cycles until cumulative cash flow turns positive. The first season counts the inclusive package and only additional feed; later seasons must purchase new fingerlings and ALL feed. Includes a 10% allowance and excludes loan interest, tax, land, significant repairs and unpriced costs. Feed conversion and stocking density remain unverified.</p>
+            <h4>Season-by-season recovery (expected case)</h4>
             <div className="financeScenarioTable">
-              <div className="financeScenarioHeading"><span>Scenario</span><span>Net per season</span><span>Payback</span></div>
+              <div className="financeScenarioHeading"><span>Season</span><span>Season net cash</span><span>Cumulative net cash</span></div>
+              {investment.cashFlow.map(s => (
+                <div className="financeScenarioRow" key={s.season}>
+                  <span>{s.season === 1 ? "1 (includes all setup)" : String(s.season)}</span>
+                  <span className={s.seasonCashResult < 0 ? "financeNegative" : ""}>{ugx(s.seasonCashResult)}</span>
+                  <strong className={s.cumulativeCash < 0 ? "financeNegative" : ""}>{ugx(s.cumulativeCash)}</strong>
+                </div>
+              ))}
+            </div>
+            <p className="financeMuted">The cumulative figure includes the original purchase price in Season 1. Later seasons are charged for new fingerlings, full feed and other recurring costs. Positive cumulative cash first appears when the investment has been recovered. Assumes equivalent uninterrupted seasons with a full harvest each time.</p>
+            <h4>What if survival, feed conversion or selling price change?</h4>
+            <div className="financeScenarioTable">
+              <div className="financeScenarioHeading"><span>Scenario</span><span>First-season cash after setup</span><span>Payback</span></div>
               {investment.scenarios.map(s => (
                 <div key={s.label} className="financeScenarioRow">
                   <span>{s.label}</span>
-                  <span className={s.cashSurplus < 0 ? "financeNegative" : ""}>{ugx(s.cashSurplus)}</span>
+                  <span className={s.firstCycleCashResult < 0 ? "financeNegative" : ""}>{ugx(s.firstCycleCashResult)}</span>
                   <strong>{s.paybackSeasons === null ? "Not reached" : s.paybackSeasons + " seasons"}</strong>
                 </div>
               ))}
             </div>
-            <p className="financeMuted">Conservative: lower survival, higher FCR and selling price 10% lower. Optimistic: slightly higher survival, better FCR and selling price 10% higher. Even the optimistic case is not a guarantee.</p>
+            <p className="financeMuted">Conservative: lower survival, higher FCR and selling price 10% lower. Optimistic: slightly higher survival, better FCR and selling price 10% higher. These are illustrative sensitivities, not validated probabilities or guarantees.</p>
           </div>
 
           <div className="financeCautions">
