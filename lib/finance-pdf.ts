@@ -198,6 +198,7 @@ export function generateFarmProposal(
   writer.item("SANDS-reported aerator rating", quantity(input.aerationWattsPerTank) + " W per aerator");
   writer.item("Support and training allowance", ugx(farm.supportCost));
   writer.item("Water testing and supplies", ugx(farm.waterTestingCost));
+  writer.item("Other operating costs per season", ugx(farm.otherSeasonCost) + (input.otherSeasonCost === 0 ? " - UNPRICED" : ""));
   writer.item("Fresh water (first fill + exchange)", ugx(farm.waterSupplyCost) + (input.waterCostPer1000L === 0 ? " - unpriced" : ""));
   writer.item("Contingency (10%)", ugx(farm.contingency));
   writer.item("Total first-cycle financing need", ugx(farm.projectTotal));
@@ -252,7 +253,7 @@ export function generateFarmProposal(
       "; season net " + ugx(s.seasonCashResult) + "; cumulative net " + ugx(s.cumulativeCash) +
       (s.recovered ? " (startup recovered)" : " (startup not yet recovered)") + ".");
   });
-  writer.paragraph("First-season net is fish sales LESS the full tank/equipment package, any separate backup power, additional feed after the bundled starter bag, electricity, testing, support, priced water and contingency. Repeat seasons must buy replacement fingerlings and ALL feed. Payback is reached only when the cumulative cash balance becomes nonnegative. It excludes loan interest/repayments, taxes, major repairs, land, unpriced labour, harvesting, transport and any water cost not entered. The assumed 1.3 FCR and 500kg/tank output must be validated before lender use.");
+  writer.paragraph("First-season net is fish sales LESS the full tank/equipment package, any separate backup power, additional feed after the bundled starter bag, electricity, testing, support, priced water and contingency. Repeat seasons must buy replacement fingerlings and ALL feed. Payback is reached only when the cumulative cash balance becomes nonnegative. It excludes loan interest/repayments, taxes, major repairs, land, any labour, harvest, transport or other costs not entered, and any water cost not entered. The assumed 1.3 FCR and 500kg/tank output must be validated before lender use.");
 
   writer.heading("6. PRICE & PRODUCTION SENSITIVITY");
   investment.scenarios.forEach(s => {
