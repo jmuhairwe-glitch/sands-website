@@ -247,8 +247,10 @@ export function generateFarmProposal(
   writer.item("Cumulative cash break-even season", payback(investment.paybackSeasons, investment.paybackMonths));
   writer.heading("SEASON-BY-SEASON CAPITAL RECOVERY");
   investment.cashFlow.forEach(s => {
-    writer.item("Season " + s.season + (s.season === 1 ? " (includes original package)" : " (repeat inputs)"),
-      "Net " + ugx(s.seasonCashResult) + ", cumulative " + ugx(s.cumulativeCash));
+    writer.paragraph("Season " + s.season + (s.season === 1 ? " (includes original package)" : " (repeat inputs)") +
+      ": sales " + ugx(s.sales) + "; total season costs " + ugx(s.totalOutlay) +
+      "; season net " + ugx(s.seasonCashResult) + "; cumulative net " + ugx(s.cumulativeCash) +
+      (s.recovered ? " (startup recovered)" : " (startup not yet recovered)") + ".");
   });
   writer.paragraph("First-season net is fish sales LESS the full tank/equipment package, any separate backup power, additional feed after the bundled starter bag, electricity, testing, support, priced water and contingency. Repeat seasons must buy replacement fingerlings and ALL feed. Payback is reached only when the cumulative cash balance becomes nonnegative. It excludes loan interest/repayments, taxes, major repairs, land, unpriced labour, harvesting, transport and any water cost not entered. The assumed 1.3 FCR and 500kg/tank output must be validated before lender use.");
 
