@@ -201,6 +201,8 @@ export function generateFarmProposal(
     writer.item("Initial fingerlings", ugx(farm.fingerlingsCost));
     writer.item("Full first-season feed", ugx(farm.feedCost));
   }
+  if (farm.extraFiltrationBudget > 0) writer.item("Extra filtration ABOVE packaged filters", ugx(farm.extraFiltrationBudget));
+  if (farm.extraFiltrationBudget === 0 && input.waterExchangePct >= 50) writer.note("IMPORTANT: Additional filtration upgrades have NOT been priced (UGX 0 entered). SANDS still needs to assess filter solids capture and TAN conversion for the peak feed load.");
   writer.item("Electricity estimate", ugx(farm.energyCost));
   writer.item("SANDS-reported shared pump power", quantity(input.pumpWatts) + " W per pump");
   writer.item("SANDS-reported aerator rating", quantity(input.aerationWattsPerTank) + " W per aerator");
@@ -225,6 +227,9 @@ export function generateFarmProposal(
   writer.item("Indicative oxygen demand", quantity(farm.oxygenKgDay, 2) + " kg O2/day");
   writer.item("Total flow allocated to tanks", quantity(farm.nominalPumpLph) + " litres/hour");
   writer.item("NEW water exchanged daily", input.waterExchangePct.toFixed(0) + "% of working volume");
+  writer.item("20% baseline daily exchange", quantity(farm.volumeLitres * .2) + " litres");
+  writer.item("50% alternative daily exchange", quantity(farm.volumeLitres * .5) + " litres");
+  writer.item("50% vs 20% extra exchange/season", quantity(farm.volumeLitres * .30 * input.cycleDays) + " litres");
   writer.item("Fresh makeup water per day", quantity(farm.dailyFreshWaterLitres) + " litres");
   writer.item("Wastewater discharge per day", quantity(farm.dailyDischargeLitres) + " litres");
   writer.item("Exchange water over full season", quantity(farm.cycleExchangeWaterLitres) + " litres");
@@ -243,7 +248,7 @@ export function generateFarmProposal(
     writer.item("Existing biofilter reported", input.biofilterPresent ? "Yes - requires assessment" : "No");
     writer.item("Existing aeration reported", input.aerationPresent ? "Yes - requires assessment" : "No");
   }
-  writer.paragraph("The standard SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful), with ~3,142 L at assumed 1.0 m working depth. The proposed 5,000 L WORKING tank requires one extra iron sheet and extra pallet-base materials, with dimensions and fabrication costs to be verified. A minimum 20% of working water is replaced with NEW water each day, with equivalent wastewater discharge; this is entirely separate from internal pump circulation. A 50,000 L/h, 500 W nominal pump is shared across up to six tanks, with the excess routed to the filter/aeration return; measured head, actual delivery and safe treatment capacity must be verified. A 20% water exchange does NOT establish safe stocking at this proposed biomass. Verify oxygen transfer, TAN conversion, solids, CO2, source quality and reliability, discharge compliance, pH, alkalinity and power backup.");
+  writer.paragraph("The standard SANDS circular tank is 2m diameter x 1.2m high (~3,770L brimful), with ~3,142L at assumed 1.0m working depth. The proposed 5,000L WORKING tank has unconfirmed fabricator costs. The selected 20%-100% daily water-exchange percentage represents incoming fresh water and matched discharge and is SEPARATE from internal pump flow. A 50,000L/h, 500W nominal shared pump recirculates existing water. Even 50% exchange does NOT prove safe 500kg production: measure solids filtration, biofilter TAN conversion, oxygen supply, CO2 stripping, water-source quality and effluent handling. Source-water pricing at zero means UNPRICED, not free.");
 
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
