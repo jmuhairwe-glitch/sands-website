@@ -154,7 +154,7 @@ export function generateFarmProposal(
   writer.item("Project type", firstStage);
 
   writer.heading("1. EXECUTIVE SUMMARY");
-  writer.paragraph("This proposal requests support for a " + profile.label + " project with " +
+  writer.paragraph("This proposal requests support for a fish farm growing " + profile.label + ", with " +
     quantity(farm.tanks) + " tank(s), each holding " + quantity(input.tankLitres) +
     " litres. Under the current screening assumptions, the project starts with approximately " +
     quantity(farm.fishStocked) + " fingerlings and aims for " + quantity(farm.harvestKg, 1) +
