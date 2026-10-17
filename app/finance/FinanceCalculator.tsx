@@ -65,6 +65,8 @@ export default function FinanceCalculator() {
     "Complete SANDS package price: " + ugx(result.packageCost),
     "Starter feed included (estimated): " + quantity(result.includedStarterFeedKg, 1) + " kg",
     "Daily fresh water exchange: " + inputs.waterExchangePct + "% (" + quantity(result.dailyFreshWaterLitres) + " L/day)",
+    "Water source: " + ({piped:"NWSC/piped",borehole:"Borehole",other:"Other reliable source",unspecified:"To confirm"}[inputs.waterSource]),
+    "Reliable fresh water available: " + (inputs.availableNewWaterLpd > 0 ? quantity(inputs.availableNewWaterLpd) + " L/day" : "Not confirmed"),
     "Estimated project cost: " + ugx(result.projectTotal),
     "Requested: on-site assessment and itemised quote.",
   ].join("\n");
@@ -116,6 +118,21 @@ export default function FinanceCalculator() {
             </select>
           </div>
 
+          <div className="financeField">
+            <label htmlFor="farmWaterSource">Available NEW water source</label>
+            <select id="farmWaterSource" value={inputs.waterSource} onChange={e => set({ waterSource: e.target.value as FarmInputs["waterSource"] })}>
+              <option value="unspecified">To be confirmed</option>
+              <option value="piped">NWSC / piped water</option>
+              <option value="borehole">Borehole / well</option>
+              <option value="other">Other reliable fresh water source</option>
+            </select>
+            <small>Any of these sources can be considered, provided the daily supply and water quality are suitable for fish. Borehole water may require pumping/treatment; piped water may require dechlorination and reserve storage.</small>
+          </div>
+          <div className="financeField">
+            <label htmlFor="availableWater">Reliable fresh water available (litres per day)</label>
+            <Numeric id="availableWater" value={inputs.availableNewWaterLpd} min={0} max={100000000} step={100} onChange={availableNewWaterLpd => set({ availableNewWaterLpd })}/>
+            <small>Optional until assessed: 0 means UNKNOWN, not zero supply. If entered, the simulator checks that your source meets the exchange requirement.</small>
+          </div>
           <div className="financeField">
             <label htmlFor="waterExchangePct">Daily NEW water exchange (% of operating volume)</label>
             <div className="financeMode" role="group" aria-label="Daily water exchange presets">
@@ -246,6 +263,9 @@ export default function FinanceCalculator() {
           <div className="financePanel">
             <h3>Fresh water supply and daily exchange</h3>
             <div className="financeMetrics">
+              <div><small>New water source</small><strong>{({piped: "NWSC / piped water", borehole: "Borehole / well", other: "Other source", unspecified: "To be confirmed"}[inputs.waterSource])}</strong></div>
+              <div><small>Confirmed fresh water per day</small><strong>{result.waterSourceCapacityKnown ? quantity(inputs.availableNewWaterLpd) + " L/day" : "Not yet verified"}</strong></div>
+              <div><small>Daily supply screening</small><strong>{!result.waterSourceCapacityKnown ? "Needs assessment" : result.sufficientFreshWater ? "Sufficient volume (initial screen)" : "INSUFFICIENT volume"}</strong></div>
               <div><small>New water replacement</small><strong>{quantity(inputs.waterExchangePct)}% per day</strong></div>
               <div><small>Fresh make-up water</small><strong>{quantity(result.dailyFreshWaterLitres)} L/day</strong></div>
               <div><small>Equivalent discharge</small><strong>{quantity(result.dailyDischargeLitres)} L/day</strong></div>
@@ -264,6 +284,7 @@ export default function FinanceCalculator() {
                 </div>
               ))}
             </div>
+            <p className="financeMuted">Water can come from NWSC/piped supply, borehole or another reliable source. Its quality must be tested, and storage or flow reliability verified. Entering a daily available amount lets the planner screen it against new-water demand. This does not prove suitability of the water chemistry or biosecurity.</p>
             <p className="financeMuted">Choosing 50% instead of 20% adds {quantity(result.volumeLitres * .30)} L/day and {quantity(result.volumeLitres * .30 * inputs.cycleDays)} L per season at the same tank size. The incremental water-source charge would be {inputs.waterCostPer1000L === 0 ? "UNPRICED (enter UGX per 1,000 L above)" : ugx(result.volumeLitres * .30 * inputs.cycleDays / 1000 * inputs.waterCostPer1000L)}; treatment, water pumping and discharge charges may be additional. The 50,000 L/hour shared RAS pump only circulates existing system water; it does not provide this new supply. Extra filtration does not guarantee the 500 kg/tank harvest: check biofilter TAN capacity, solids capture, oxygen transfer and CO₂ removal.</p>
           </div>
 
