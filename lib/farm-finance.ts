@@ -23,6 +23,8 @@ export type FarmInputs = {
   electricityTariff: number;
   pumpWatts: number; // provisional electrical power draw PER installed pump
   aerationWattsPerTank: number; // provisional electric draw PER tank
+  waterExchangePct: number; // fresh water replaced daily, minimum 20% of working volume
+  waterCostPer1000L: number; // UGX per 1,000 L, 0 means water acquisition cost unpriced
 };
 export type FarmResult = {
   feasible: boolean;
@@ -40,6 +42,14 @@ export type FarmResult = {
   nominalInstalledFlowLph: number;
   provisionalBypassFlowLph: number;
   flowPerTankLph: number;
+  dailyFreshWaterLitres: number;
+  cycleExchangeWaterLitres: number;
+  initialFillLitres: number;
+  firstCycleFreshWaterLitres: number;
+  dailyDischargeLitres: number;
+  waterExchangeCost: number;
+  initialFillWaterCost: number;
+  waterSupplyCost: number;
   infrastructure: number;
   fingerlingsCost: number;
   feedCost: number;
@@ -68,6 +78,7 @@ export const DEFAULTS: FarmInputs = {
   fcr: 1.3, survival: .85, harvestKgEach: 1, salePriceKg: 15000,
   cycleDays: 180, electricityTariff: 850,
   pumpWatts: 1500, aerationWattsPerTank: 100,
+  waterExchangePct: 20, waterCostPer1000L: 0,
 };
 
 // SANDS circular tank: 2 m diameter x 1.2 m physical height. Brimful: ~3,770 L.
@@ -97,6 +108,19 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const days = clean(inputs.cycleDays, 180, 90, 365);
   const nominalPumpLph = Math.ceil(volumeLitres * SANDS_TANK.targetTurnoversPerHour);
   const isExisting = inputs.mode === "existing";
+  // Daily fresh-water replacement is distinct from recirculation.
+  // At 20%, 3,142 L working volume needs 628.4 L/day of NEW water.
+  // At steady volume, that also means approximately 628.4 L/day discharged.
+  const waterExchangePct = clean(inputs.waterExchangePct, 20, 20, 100);
+  const dailyFreshWaterLitres = volumeLitres * waterExchangePct / 100;
+  const cycleExchangeWaterLitres = dailyFreshWaterLitres * days;
+  const initialFillLitres = isExisting ? 0 : volumeLitres;
+  const firstCycleFreshWaterLitres = initialFillLitres + cycleExchangeWaterLitres;
+  const dailyDischargeLitres = dailyFreshWaterLitres;
+  const waterRate = clean(inputs.waterCostPer1000L, 0, 0, 100000);
+  const waterExchangeCost = cycleExchangeWaterLitres / 1000 * waterRate;
+  const initialFillWaterCost = initialFillLitres / 1000 * waterRate;
+  const waterSupplyCost = waterExchangeCost + initialFillWaterCost;
   const effectiveFlow = isExisting ? Math.max(0, inputs.actualFlowLph) : nominalPumpLph;
   // Existing-tank estimates are capped by pump-flow screening as well as culture volume.
   // The 1.25 turnovers/hour is only a planning screen; oxygen, CO2 and TAN
@@ -162,13 +186,16 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     clean(inputs.electricityTariff, 850, 100, 2500);
   const supportCost = 400000 + 180000 * count;
   const waterTestingCost = 250000 + 120000 * count;
-  const runningCost = fingerlingsCost + feedCost + energyCost + supportCost + waterTestingCost;
+  const runningCost = fingerlingsCost + feedCost + energyCost + supportCost + waterTestingCost + waterSupplyCost;
   const contingency = (infrastructure + runningCost) * .10;
   const projectTotal = infrastructure + runningCost + contingency;
   const budget = clean(inputs.budget, 15000000, 0, 500000000);
   const projectedSales = harvestKg * clean(inputs.salePriceKg, 10000, 1000, 50000);
   const cycleOperatingMargin = projectedSales - runningCost;
   const warnings: string[] = [];
+  if (waterRate === 0) warnings.push("Daily 20%-or-higher fresh water replacement is included as a quantity, but water acquisition/discharge costs are UNPRICED (UGX 0/1,000 L). Add the true water cost or own-source pumping/treatment expense.");
+  if (waterRate > 0) warnings.push("Water unit cost estimates supply only; separately confirm water treatment, source pumping, wastewater handling and any permits/fees.");
+  warnings.push("Daily new-water exchange is additional to internal recirculation; approximately the same volume must be drained or discharged to hold the water level constant.");
   if (isExisting && effectiveFlow < nominalPumpLph) warnings.push("Reported circulation is below the preliminary turnover screen; fish numbers have been reduced. Check pump head and actual flow.");
   if (!isExisting && litresPerTank !== SANDS_TANK.workingLitres) warnings.push("Nonstandard tank dimensions require a supplier quotation; equipment costs have only been scaled as a placeholder.");
   if (!isExisting) warnings.push("One nominal 30,000 L/h pump is costed for up to six standard tanks. Its actual delivered flow at installed head, valve allocation, bypass route and power draw must be confirmed.");
@@ -191,6 +218,9 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     tanks: count, volumeLitres, fishStocked, fishHarvested, harvestKg,
     feedKg, peakFeedKgDay, tanGramsDay, oxygenKgDay, nominalPumpLph,
     pumpUnits, nominalInstalledFlowLph, provisionalBypassFlowLph, flowPerTankLph,
+    dailyFreshWaterLitres, cycleExchangeWaterLitres, initialFillLitres,
+    firstCycleFreshWaterLitres, dailyDischargeLitres,
+    waterExchangeCost, initialFillWaterCost, waterSupplyCost,
     infrastructure, fingerlingsCost, feedCost, energyCost, supportCost,
     waterTestingCost, runningCost, contingency, projectTotal,
     amountRemaining: budget - projectTotal, projectedSales, cycleOperatingMargin,
