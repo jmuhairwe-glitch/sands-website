@@ -170,9 +170,16 @@ export function generateFarmProposal(
   writer.item("Number of tanks", quantity(farm.tanks));
   writer.item("Total working culture water", quantity(farm.volumeLitres) + " litres");
   if (input.mode === "new") {
-    writer.item("SANDS standard tank geometry", "2.0 m diameter x 1.2 m high");
-    writer.item("Brimful volume per tank", quantity(SANDS_TANK.brimfulLitres) + " litres");
-    writer.item("Assumed working fill height", "1.0 m - verify on site");
+    if (farm.upgradedTank) {
+      writer.item("Proposed larger tank", "5,000 L WORKING water per tank");
+      writer.item("Incremental fabrication materials", "One extra iron sheet + extra base pallets");
+      writer.item("Extra fabrication cost (all tanks)", farm.upgradePricingPending ? "UNPRICED" : ugx(farm.upgradedTankExtraCost));
+      writer.note("Working volume of larger tank is a design target; new tank diameter, safe pallet/base count and loading strength are not confirmed.");
+    } else {
+      writer.item("SANDS standard tank geometry", "2.0 m diameter x 1.2 m high");
+      writer.item("Brimful volume per tank", quantity(SANDS_TANK.brimfulLitres) + " litres");
+      writer.item("Assumed working fill height", "1.0 m - verify on site");
+    }
   }
   writer.item("Fingerlings needed", quantity(farm.fishStocked));
   writer.item("Assumed survival", (input.survival * 100).toFixed(1) + "%");
@@ -183,7 +190,8 @@ export function generateFarmProposal(
 
   writer.heading("3. SETUP & FIRST-SEASON COSTS");
   if (farm.isSandsPackage) {
-    writer.item("Inclusive SANDS tank package(s)", ugx(farm.packageCost));
+    writer.item("Inclusive SANDS tank package(s)", ugx(farm.packageCost) + (farm.upgradePricingPending ? " - MINIMUM" : ""));
+    if (farm.upgradedTank) writer.item("Upgrade sheet/base/pallet price", farm.upgradePricingPending ? "UNPRICED - request supplier quote" : ugx(farm.upgradedTankExtraCost));
     writer.item("Fish supplied (no extra charge)", quantity(farm.includedFingerlings) + " fingerlings");
     writer.item("Starter feed bag(s) included", quantity(farm.includedStarterFeedKg, 1) + " kg - bag size unconfirmed");
     writer.item("Additional first-season feed", quantity(farm.additionalFeedKg, 1) + " kg / " + ugx(farm.feedCost));
@@ -203,7 +211,7 @@ export function generateFarmProposal(
   writer.item("Contingency (10%)", ugx(farm.contingency));
   writer.item("Total first-cycle financing need", ugx(farm.projectTotal));
   if (farm.isSandsPackage) {
-    writer.note("SANDS standard CATFISH package: one tank UGX 5,000,000; for two or more tanks UGX 3,500,000 per tank. Inclusive package covers tanks, shared pump (30,000 L/h for up to six tanks), UGX 600,000 filtration per tank, aeration, installation, initial fingerlings including survival allowance, and one starter feed bag PER TANK. Bag weight currently assumed " + input.starterBagKgPerTank + " kg (NOT YET CONFIRMED). The package price is not broken down and none of these included items is billed again. New feed supply is modeled at UGX 2,500/kg. Extra backup power UGX 1,200,000, water and support allowances, and feed FCR are subject to verification. Bank/project quotation is conditional on safe 500 kg/tank design.");
+    writer.note("SANDS standard CATFISH package: one tank UGX 5,000,000; for two or more tanks UGX 3,500,000 per tank. Inclusive package covers tanks, shared 50,000 L/h, 500 W pump for up to six tanks, UGX 600,000 filtration per tank, aeration, installation, initial fingerlings including survival allowance, and one starter feed bag PER TANK. Bag weight currently assumed " + input.starterBagKgPerTank + " kg (NOT YET CONFIRMED). The package price is not broken down and none of these included items is billed again. New feed supply is modeled at UGX 2,500/kg. Extra backup power UGX 1,200,000, water and support allowances, and feed FCR are subject to verification. Bank/project quotation is conditional on safe 500 kg/tank design.");
   } else {
     writer.note("Existing-tank/other-species equipment costs are provisional component estimates. The UGX 5m/3.5m packages have only been confirmed for standard new catfish systems. Feed and fingerling costs and engineering requirements must be verified for the selected species.");
   }
@@ -235,12 +243,13 @@ export function generateFarmProposal(
     writer.item("Existing biofilter reported", input.biofilterPresent ? "Yes - requires assessment" : "No");
     writer.item("Existing aeration reported", input.aerationPresent ? "Yes - requires assessment" : "No");
   }
-  writer.paragraph("The SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful); planning uses ~3,142 L per tank at 1.0 m assumed water depth. A minimum 20% of working water is replaced with NEW water each day, with equivalent wastewater discharge; this is entirely separate from internal pump circulation. A 30,000 L/h nominal pump is shared across up to six standard tanks, with the excess routed to the filter/aeration return; measured head, actual delivery and safe treatment capacity must be verified. A 20% water exchange does NOT establish safe stocking at this proposed biomass. Verify oxygen transfer, TAN conversion, solids, CO2, source quality and reliability, discharge compliance, pH, alkalinity and power backup.");
+  writer.paragraph("The standard SANDS circular tank is 2 m diameter x 1.2 m high (~3,770 L brimful), with ~3,142 L at assumed 1.0 m working depth. The proposed 5,000 L WORKING tank requires one extra iron sheet and extra pallet-base materials, with dimensions and fabrication costs to be verified. A minimum 20% of working water is replaced with NEW water each day, with equivalent wastewater discharge; this is entirely separate from internal pump circulation. A 50,000 L/h, 500 W nominal pump is shared across up to six tanks, with the excess routed to the filter/aeration return; measured head, actual delivery and safe treatment capacity must be verified. A 20% water exchange does NOT establish safe stocking at this proposed biomass. Verify oxygen transfer, TAN conversion, solids, CO2, source quality and reliability, discharge compliance, pH, alkalinity and power backup.");
 
   writer.heading("5. ESTIMATED INCOME & INVESTMENT RECOVERY");
   writer.item("Proposed sales price", ugx(input.salePriceKg) + " per kg");
   writer.item("Projected fish sales", ugx(farm.projectedSales));
-  writer.item("Total first-season cash outlay", ugx(investment.initialCapital));
+  writer.item("Total first-season cash outlay", ugx(investment.initialCapital) + (farm.upgradePricingPending ? " - MINIMUM ONLY" : ""));
+  if (farm.upgradePricingPending) writer.paragraph("COST NOT INCLUDED: the extra iron sheet, additional pallet base and fabrication labour for each proposed 5,000 L tank are currently UNPRICED. The resulting first-season total and payback are only MINIMUM estimates; do not use for a lending commitment until a real fabrication quote is included.");
   writer.item("Fish sales at first harvest", ugx(farm.projectedSales));
   writer.item("First-season net after ALL setup costs", ugx(investment.firstCycleCashResult));
   writer.item("Repeat-season cost incl. reserve", ugx(investment.recurringCycleOutlay));
