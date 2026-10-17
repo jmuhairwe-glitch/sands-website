@@ -27,6 +27,7 @@ export type FarmInputs = {
   waterCostPer1000L: number; // UGX per 1,000 L, 0 means water acquisition cost unpriced
   starterBagKgPerTank: number; // assumed bag size, SANDS still to confirm
   otherSeasonCost: number; // editable unpriced labour, harvesting, freight and repairs per cycle
+  extraFiltrationBudget: number; // optional ADDITIONAL whole-system capital above included standard filtration
   upgradedTankExtraCostPerTank: number; // sheet + extra pallets + welding/base change; 0 means unquoted
 };
 export type FarmResult = {
@@ -54,6 +55,7 @@ export type FarmResult = {
   initialFillWaterCost: number;
   waterSupplyCost: number;
   otherSeasonCost: number;
+  extraFiltrationBudget: number;
   infrastructure: number; // purchased package(s), plus any explicit extra backup allowance
   isSandsPackage: boolean;
   packageCost: number; // base package rate + entered 5,000-L fabrication uplift
@@ -94,7 +96,7 @@ export const DEFAULTS: FarmInputs = {
   cycleDays: 180, electricityTariff: 850,
   pumpWatts: 500, aerationWattsPerTank: 40,
   waterExchangePct: 20, waterCostPer1000L: 0, starterBagKgPerTank: 25,
-  otherSeasonCost: 0, upgradedTankExtraCostPerTank: 0,
+  otherSeasonCost: 0, upgradedTankExtraCostPerTank: 0, extraFiltrationBudget: 0,
 };
 
 // SANDS circular tank: 2 m diameter x 1.2 m physical height. Brimful: ~3,770 L.
@@ -202,7 +204,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   // and a starter feed bag per tank. Never bill these components twice.
   // Backup power is listed separately, pending confirmation of its price.
   const backupAllowance = isExisting && inputs.backupPresent ? 0 : provisionalBackupAllowance;
-  const infrastructure = isExisting
+  const baseInfrastructure = isExisting
     ? (inputs.biofilterPresent ? 0 : SANDS_TANK.filterCost * count * relativeTankSize)
       + (inputs.aerationPresent ? 0 : SANDS_TANK.aerationCost * count * relativeTankSize)
       + ((!inputs.biofilterPresent || !inputs.aerationPresent) ? SANDS_TANK.pipingInstallCost * count : 0)
@@ -212,6 +214,10 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
       : count * standardUnitCost * relativeTankSize
         + pumpUnits * SANDS_TANK.pumpCost
         + backupAllowance;
+  // The standard mechanical/biological filter is already INCLUDED in the
+  // SANDS package. Only an actual separately quoted improvement belongs here.
+  const extraFiltrationBudget = clean(inputs.extraFiltrationBudget, 0, 0, 50000000);
+  const infrastructure = baseInfrastructure + extraFiltrationBudget;
 
   const includedFingerlings = isSandsPackage ? fishStocked : 0;
   // Starter bag is included in the package. Its size remains unconfirmed;
@@ -241,6 +247,9 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
   const projectedSales = harvestKg * clean(inputs.salePriceKg, 10000, 1000, 50000);
   const cycleOperatingMargin = projectedSales - runningCost;
   const warnings: string[] = [];
+  if (extraFiltrationBudget === 0 && isSandsPackage && waterExchangePct >= 50) warnings.push("At 50% or higher daily fresh-water replacement, filtration upgrades have NOT been priced. The standard UGX 600,000 per-tank filter is included, but extra media, solids removal or oxygenation must be assessed separately. A zero additional allowance is UNPRICED, not proof that upgrades are unnecessary.");
+  if (extraFiltrationBudget > 0) warnings.push("Additional filtration allowance is a user-entered whole-system capital sum above the SANDS package and is included in first-season investment and payback. Technical treatment capacity still requires verification.");
+  if (waterExchangePct >= 50) warnings.push("High daily water exchange needs dependable clean source water and controlled effluent handling; verify source water pH, ammonia, oxygen, temperature, pressure and availability.");
   if (otherSeasonCost === 0) warnings.push("Labour, fish harvesting, delivery/marketing, maintenance and other farm expenses have NOT been priced. Add realistic per-cycle costs before treating the payback figures as usable for lending.");
   if (waterRate === 0) warnings.push("Daily 20%-or-higher fresh water replacement is included as a quantity, but water acquisition/discharge costs are UNPRICED (UGX 0/1,000 L). Add the true water cost or own-source pumping/treatment expense.");
   if (waterRate > 0) warnings.push("Water unit cost estimates supply only; separately confirm water treatment, source pumping, wastewater handling and any permits/fees.");
@@ -278,6 +287,7 @@ function calculate(inputs: FarmInputs, tanks: number): FarmResult {
     dailyFreshWaterLitres, cycleExchangeWaterLitres, initialFillLitres,
     firstCycleFreshWaterLitres, dailyDischargeLitres,
     waterExchangeCost, initialFillWaterCost, waterSupplyCost, otherSeasonCost,
+    extraFiltrationBudget,
     infrastructure, isSandsPackage, packageCost, upgradedTank, upgradePricingPending,
     upgradedTankExtraCost, backupAllowance,
     includedFingerlings, includedStarterFeedKg, additionalFeedKg,
