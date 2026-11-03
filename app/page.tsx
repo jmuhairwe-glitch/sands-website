@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import { businessData, pageMetadata } from '../lib/site';
+import { servicePages } from '../lib/service-pages';
+import StructuredData from './components/StructuredData';
 
-export const metadata: Metadata = {
-  title: "SANDS Fish Farm | Fingerlings, Training & Tank Systems in Kampala",
-  description: "Enquire about catfish and tilapia fingerlings, practical fish-farming training and tank systems at SANDS Fish Farm in Kanyanya, Kampala. Call or WhatsApp for availability.",
-  alternates: { canonical: "https://sands.co.ug" },
-};
+export const metadata = pageMetadata(
+  'Fish Farming in Uganda | Fingerlings & Training | SANDS',
+  'SANDS Fish Farm in Kampala: catfish and tilapia fingerlings, practical training, customised floating and sinking feeds, and fish-farming tank systems.'
+);
 
 const whatsapp = (message: string) => `https://wa.me/256756188061?text=${encodeURIComponent(message)}`;
 const fingerlings = "/enquire?topic=Fingerlings";
@@ -13,17 +14,19 @@ const visit = whatsapp("Hello SANDS, I found you on sands.co.ug and would like t
 const directions = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent("SANDS FISH FARM Plot 3A Drake Lane Kanyanya Kampala Uganda");
 
 const services = [
-  { icon: "🐟", title: "Catfish & Tilapia Hatchery", text: "Ask about available catfish and tilapia fingerling sizes, quantities and prices for your next stocking." },
-  { icon: "📈", title: "Grow-out & Intensive Fish Production", text: "Discuss your production plans or enquire about table-fish availability, sizes and prices." },
-  { icon: "💧", title: "RAS / Tank Systems", text: "Discuss tanks, water circulation and filtration for your available space and production goals." },
-  { icon: "🌾", title: "Fish Feed Development", text: "Discuss feed choices, feeding plans and cost-conscious feed development for your farm." },
-  { icon: "👥", title: "Training & Farmer Support", text: "Enquire about practical learning at the farm, with topics suited to your experience and setup." },
-  { icon: "♻️", title: "Circular Fish Farming", text: "Learn about our work exploring agricultural uses for fish-farm wastewater and solids." },
+  { icon: "🐟", title: "Catfish Fingerlings", text: "Plan your next catfish stocking. View the published price, order requirements and collection information.", href: '/catfish-fingerlings-uganda', action: 'Catfish sizes & orders' },
+  { icon: "🐟", title: "Tilapia Fingerlings", text: "Discuss the batch, fish size and quantity that suit your pond or tank, with availability confirmed before ordering.", href: '/tilapia-fingerlings-uganda', action: 'Tilapia sizes & orders' },
+  { icon: "💧", title: "Fish Tanks & RAS Systems", text: "Discuss tanks, circulation and filtration for your available space, water source and production goals.", href: '/fish-tanks-uganda', action: 'Plan a tank system' },
+  { icon: "🌾", title: "Customised Fish Feeds", text: "Floating and sinking feeds customised to your species, growth stage and requirements. Confirm the specification and price with SANDS.", href: '/fish-feeds-uganda', action: 'Feed types & guide prices' },
+  { icon: "👥", title: "Practical Fish-Farming Training", text: "Compare one-day, residential and hatchery training options at the farm, then request a suitable date.", href: '/fish-farming-training-uganda', action: 'Courses & training fees' },
+  { icon: "📈", title: "Start or Improve Your Farm", text: "Work through the water, space, equipment, fish and feed budget for your own fish-farming project.", href: '/fish-farming-uganda', action: 'Explore the planning guide' },
 ];
 
 export default function Home() {
   return (
     <main>
+      <StructuredData data={businessData} />
+      <StructuredData data={{ '@context': 'https://schema.org', '@type': 'WebSite', '@id': 'https://sands.co.ug/#website', name: 'SANDS Fish Farm', url: 'https://sands.co.ug/', publisher: { '@id': 'https://sands.co.ug/#farm' } }} />
       <header className="siteHeader">
         <div className="container navWrap">
           <a className="brand" href="#home" aria-label="SANDS Fish Farm home">
@@ -33,7 +36,7 @@ export default function Home() {
             <a href="#home">Home</a>
             <a href="#about">About Us</a>
             <a href="#services">Our Services</a>
-            <a href="#training">Training</a>
+            <a href="/fish-farming-training-uganda">Training</a>
             <a href="/enquire">Prices & enquiries</a><a href="/finance">Farm simulator</a><a href="#contact">Contact</a>
           </nav>
           <a className="button primary topButton"
@@ -50,10 +53,10 @@ export default function Home() {
           <p className="eyebrow">SANDS FISH FARM (U) LIMITED</p>
           <h1>
             Fingerlings. Training.<br />
-            <span>Fish farming in Kampala.</span>
+            <span>Fish farming in Uganda.</span>
           </h1>
           <p className="heroText">
-            Planning to stock your pond, start fish farming or improve your tank system? Talk to SANDS in Kanyanya about your next step.
+            Planning to stock your pond, start fish farming or improve your tank system? Talk to SANDS Fish Farm in Kanyanya, Kampala about your next step.
           </p>
           <div className="heroActions">
             <a className="button primary" href={fingerlings} target="_blank" rel="noreferrer">Enquire about fingerlings</a>
@@ -81,7 +84,7 @@ export default function Home() {
                 <div className="serviceIcon" aria-hidden="true">{service.icon}</div>
                 <h3>{service.title}</h3>
                 <p>{service.text}</p>
-                <a className="serviceLink" href={service.title.includes("Hatchery") ? fingerlings : service.title.includes("Training") ? training : (service.title.includes("Feed") ? "/enquire?topic=Fish%20feeds" : service.title.includes("Tank") ? "/enquire?topic=Tanks%20%26%20recycling" : "/enquire?topic=Something%20else")} target="_blank" rel="noreferrer">{service.title.includes("Hatchery") ? "Request sizes & prices" : service.title.includes("Training") ? "Ask about training" : "Discuss your requirements"} →</a>
+                <a className="serviceLink" href={service.href}>{service.action} →</a>
               </article>
             ))}
           </div>
@@ -103,6 +106,7 @@ export default function Home() {
               practical, affordable solutions that make aquaculture work for farmers, communities
               and the environment.
             </p>
+            <p>Ask about table-fish availability and grow-out planning. We also explore agricultural uses for fish-farm wastewater and solids.</p>
             <a className="button primary" href="#contact">Get in Touch →</a>
           </div>
           <div className="aboutPanel">
@@ -182,6 +186,7 @@ export default function Home() {
         <a href="/enquire" target="_blank" rel="noreferrer">Prices & enquiries</a>
       </div>
       <footer className="footer">
+        <nav className="container footerServices" aria-label="SANDS services">{servicePages.map(page => <a key={page.slug} href={`/${page.slug}`}>{page.label}</a>)}</nav>
         <div className="container footerInner">
           <span>© 2026 SANDS FISH FARM (U) LIMITED. All rights reserved.</span>
           <span>Better fish. Smarter farming.</span>
