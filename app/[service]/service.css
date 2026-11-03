@@ -1,0 +1,46 @@
+.serviceNav { min-height: 88px; display: flex; align-items: center; gap: 28px; padding-block: 12px; }
+.serviceNav nav { margin-left: auto; display: flex; gap: 24px; font-size: 14px; font-weight: 700; }
+.serviceNav nav a { text-decoration: none; }
+.serviceHero { padding: 48px 0 64px; background: linear-gradient(125deg, #06273d, #0c4d59); color: white; }
+.serviceHeroGrid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: center; gap: 60px; }
+.serviceBreadcrumb { display: flex; flex-wrap: wrap; gap: 12px; color: #d5e7ee; font-size: 14px; margin-bottom: 38px; }
+.serviceHero h1 { font-size: clamp(36px, 4.8vw, 62px); line-height: 1.08; }
+.serviceIntro { color: #e0edf1; font-size: 19px; line-height: 1.7; margin: 24px 0 30px; max-width: 670px; }
+.serviceHighlight { border: 1px solid #6e9ba2; border-radius: 20px; padding: 30px; background: #ffffff0c; }
+.serviceHighlight h2 { font-size: 32px; line-height: 1.2; color: #85e5a5; }
+.serviceHighlight p { line-height: 1.65; }
+.serviceHighlight a { display: inline-block; margin-top: 12px; font-weight: 700; text-underline-offset: 4px; }
+.serviceBody { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 64px; padding-block: 60px; }
+.serviceArticle > section { margin-bottom: 44px; }
+.serviceArticle > section:last-child { margin-bottom: 0; }
+.serviceArticle h2 { font-size: clamp(27px, 3vw, 36px); line-height: 1.18; }
+.serviceArticle p, .serviceArticle li { font-size: 17px; line-height: 1.8; color: #405367; }
+.serviceArticle ul { padding-left: 24px; }
+.serviceArticle li { margin-bottom: 10px; }
+.servicePrices { display: grid; gap: 12px; }
+.servicePrice { border: 1px solid #dae5ed; border-radius: 14px; padding: 22px; background: #f5f8fb; }
+.servicePrice h3 { margin: 0 0 10px; font-size: 19px; }
+.servicePrice strong { color: #075a9e; font-size: 21px; }
+.servicePrice p { margin: 10px 0 0; }
+.serviceArticle .serviceSmall { font-size: 14px; }
+.serviceSidebar section, .serviceSidebar nav { padding: 26px; border-radius: 16px; border: 1px solid #dce6ee; background: #f5f8fb; margin-bottom: 24px; }
+.serviceSidebar h2 { font-size: 23px; line-height: 1.25; }
+.serviceSidebar p { color: #405367; line-height: 1.75; }
+.serviceSidebar a { display: block; color: #075a9e; margin-top: 18px; font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; text-underline-offset: 4px; }
+.serviceNext { padding: 28px; border-left: 4px solid #0b6fc2; background: #f5f8fb; border-radius: 12px; }
+.serviceTextLink { display: inline-flex; align-items: center; padding: 14px 0; color: #075a9e; font-weight: 700; }
+@media (max-width: 900px) {
+  .serviceNav { flex-wrap: wrap; gap: 16px; }
+  .serviceNav .button { margin-left: auto; }
+  .serviceNav nav { order: 3; width: 100%; margin: 0; flex-wrap: wrap; }
+  .serviceHeroGrid, .serviceBody { grid-template-columns: 1fr; gap: 32px; }
+  .serviceHighlight { max-width: 600px; }
+}
+@media (max-width: 480px) {
+  .serviceNav .brand img { width: 150px; height: auto; }
+  .serviceNav .button { font-size: 14px; padding: 12px 16px; }
+  .serviceHero { padding: 28px 0 40px; }
+  .serviceBody { padding-block: 36px; }
+  .serviceHighlight, .serviceNext { padding: 22px; }
+  .serviceHero .button { width: 100%; text-align: center; }
+}
