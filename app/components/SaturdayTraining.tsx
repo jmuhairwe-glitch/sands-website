@@ -18,8 +18,8 @@ export default function SaturdayTraining() {
   useEffect(() => { const refresh = () => setDates(upcomingSaturdays()); refresh(); window.addEventListener('focus', refresh); return () => window.removeEventListener('focus', refresh); }, []);
   return <section id="saturday-training"><h2>Saturday practical at SANDS Fish Farm</h2>
     <p>Join us in Kanyanya every Saturday at 10:00 a.m. Kampala time. Each session has space for 20 people. One place costs UGX 100,000. A group of 4–10 costs UGX 350,000 in total.</p>
-    <p>Choose a date to request places. The farm team will confirm availability and payment arrangements.</p>
-    <ul>{dates.map(date => <li key={date.value}><a href={'/enquire?topic=Training&date=' + date.value}>Request places for {date.label}</a></li>)}</ul>
+    <p>Choose a Saturday to view your individual ticket on AHAVA. For the group rate, request a booking directly with SANDS.</p>
+    <ul>{dates.map(date => <li key={date.value}><a href={'https://ahava.ug/training/sands/' + date.value}>{date.label} · View ticket on AHAVA</a></li>)}</ul>
     <a href="/enquire?topic=Training">Request another date or group training</a>
   </section>;
 }
