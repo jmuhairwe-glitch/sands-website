@@ -17,8 +17,8 @@ export type ServicePage = {
 export const servicePages: ServicePage[] = [
   {
     slug: 'catfish-fingerlings-uganda', label: 'Catfish fingerlings',
-    title: 'Catfish Fingerlings in Uganda | Prices & Orders | SANDS',
-    description: 'Order catfish fingerlings from SANDS Fish Farm in Kanyanya, Kampala. UGX 500 each. Confirm sizes, quantities, stocking dates and delivery before ordering.',
+    title: 'Catfish Fingerlings in Uganda – UGX 500 Each | SANDS',
+    description: 'Buy African catfish fingerlings at UGX 500 each. Collect from SANDS Fish Farm in Kanyanya, Kampala. Ask about batch availability, sizes and collection dates.',
     heading: 'Catfish fingerlings in Uganda',
     intro: 'Planning your next catfish stocking? Speak to SANDS Fish Farm in Kanyanya, Kampala about the fingerling size, quantity and collection date that fit your pond or tank.',
     highlight: 'UGX 500 per fingerling', highlightNote: 'Available sizes and quantities are confirmed for each order. Transport is quoted separately.',
@@ -125,7 +125,7 @@ export const servicePages: ServicePage[] = [
     description: 'Plan a fish-farming project in Uganda with SANDS: compare ponds and tanks, budget for fingerlings and feed, explore practical training and request advice.',
     heading: 'Starting fish farming in Uganda',
     intro: 'Before buying fish, work through the space, water, feed budget and daily attention your farm will need. SANDS Fish Farm in Kanyanya, Kampala combines hatchery work, grow-out, feed supply, tank systems and practical training.',
-    highlight: 'Start with your farm plan', highlightNote: 'Bring your measurements, water-source details and questions. Visits and training require advance arrangements.',
+    highlight: '1,000 fingerlings × UGX 500 = UGX 500,000', highlightNote: 'This covers the fish alone. Budget separately for feed through harvest, transport to your farm, and pond preparation or tank installation. Enter your own quantities and costs in the calculator.',
     action: 'Discuss my fish-farming project', enquiry: '/enquire?topic=Something%20else',
     sections: [
       { heading: 'Begin with the site and the market', paragraphs: ['Write down your location, available space, water source and power supply. Decide who you expect to sell fish to and what size they want. A pond, tank or recirculating system should follow those practical requirements.', 'Tell us whether you plan to keep catfish or tilapia, whether you already have infrastructure and how much time someone can spend at the farm each day. We can use that information to discuss training or the next steps for an assessment.'] },

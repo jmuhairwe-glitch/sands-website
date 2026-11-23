@@ -1,4 +1,5 @@
 import "./globals.css";
+import WhatsAppTracking from "./components/WhatsAppTracking";
 
 export const metadata = {
   metadataBase: new URL('https://sands.co.ug'),
@@ -14,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>{children}<WhatsAppTracking /></body>
     </html>
   );
 }
