@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { servicePages, getServicePage } from '../../lib/service-pages';
 import { businessData, directionsUrl, farmAddress, pageMetadata, siteUrl, whatsappUrl } from '../../lib/site';
 import StructuredData from '../components/StructuredData';
+import SaturdayTraining from '../components/SaturdayTraining';
 import './service.css';
 
 export const dynamicParams = false;
@@ -36,13 +37,14 @@ export default async function ServicePage({ params }: { params: Promise<{ servic
             <nav className="serviceBreadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span>{page.label}</span></nav>
             <p className="eyebrow">SANDS FISH FARM · KANYANYA, KAMPALA</p>
             <h1>{page.heading}</h1><p className="serviceIntro">{page.intro}</p>
-            <a className="button primary" href={page.enquiry}>{page.action} →</a>
+            {page.slug === 'fish-farming-training-uganda' ? <a className="button primary" href="#saturday-training">Choose a Saturday</a> : <a className="button primary" href={page.enquiry}>{page.action} →</a>}
           </div>
           <aside className="serviceHighlight"><p className="eyebrow">PLAN YOUR NEXT STEP</p><h2>{page.highlight}</h2><p>{page.highlightNote}</p><a href="/finance">Explore your farm budget →</a></aside>
         </div>
       </section>
       <div className="container serviceBody">
         <article className="serviceArticle">
+          {page.slug === 'fish-farming-training-uganda' && <SaturdayTraining />}
           {page.prices && <section aria-labelledby="prices-heading"><h2 id="prices-heading">Published prices</h2><div className="servicePrices">{page.prices.map(price => <div className="servicePrice" key={price.label}><h3>{price.label}</h3><strong>{price.price}</strong><p>{price.note}</p></div>)}</div><p className="serviceSmall">Confirm availability, dates and the final quotation before booking or ordering.</p></section>}
           {page.sections.map(section => <section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs?.map(text => <p key={text}>{text}</p>)}{section.bullets && <ul>{section.bullets.map(text => <li key={text}>{text}</li>)}</ul>}</section>)}
           <section className="faqWrap"><h2>Questions before you enquire</h2>{page.questions.map(item => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</section>
