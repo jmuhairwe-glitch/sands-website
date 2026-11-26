@@ -81,7 +81,9 @@ export default function Home() {
           <div className="serviceGrid">
             {services.map((service) => (
               <article className="serviceCard" key={service.title}>
-                <div className="serviceIcon" aria-hidden="true">{service.icon}</div>
+                {service.href === '/fish-tanks-uganda'
+                  ? <img className="tankCardPhoto" src="/images/tank-overview.webp" alt="Illustration of a modular fish tank installation" loading="lazy" width="760" height="448" />
+                  : <div className="serviceIcon" aria-hidden="true">{service.icon}</div>}
                 <h3>{service.title}</h3>
                 <p>{service.text}</p>
                 <a className="serviceLink" href={service.href}>{service.action} →</a>

@@ -44,3 +44,12 @@
   .serviceHighlight, .serviceNext { padding: 22px; }
   .serviceHero .button { width: 100%; text-align: center; }
 }
+
+.tankPhotos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.tankPhotos figure { margin: 0; }
+.tankPhotos img { display: block; width: 100%; height: auto; border-radius: 12px; }
+.tankPhotos figcaption { margin-top: 8px; font-size: .9rem; }
+@media (max-width: 540px) { .tankPhotos { grid-template-columns: 1fr; } }
+.serviceIllustration { display: block; width: 100%; height: auto; border-radius: 10px; margin-bottom: 14px; }
+.trainingIllustration { margin: 0 0 18px; }
+.trainingIllustration figcaption { font-size: .85rem; }

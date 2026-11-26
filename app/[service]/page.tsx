@@ -39,12 +39,21 @@ export default async function ServicePage({ params }: { params: Promise<{ servic
             <h1>{page.heading}</h1><p className="serviceIntro">{page.intro}</p>
             {page.slug === 'fish-farming-training-uganda' ? <a className="button primary" href="#saturday-training">Choose a Saturday</a> : <a className="button primary" href={page.enquiry}>{page.action} →</a>}
           </div>
-          <aside className="serviceHighlight"><p className="eyebrow">PLAN YOUR NEXT STEP</p><h2>{page.highlight}</h2><p>{page.highlightNote}</p><a href="/finance">Explore your farm budget →</a></aside>
+          <aside className="serviceHighlight">
+            {page.slug === 'fish-tanks-uganda' && <img className="serviceIllustration" src="/images/tank-rim.webp" width="760" height="448" alt="Illustration of the blue liner folded over a tank rim" />}
+            {page.slug === 'fish-farming-training-uganda' && <figure className="trainingIllustration"><img className="serviceIllustration" src="/images/tank-training.webp" width="760" height="448" alt="An instructor demonstrating a hand net beside a fish tank" /><figcaption>Illustration of a practical training session.</figcaption></figure>}
+            <p className="eyebrow">PLAN YOUR NEXT STEP</p><h2>{page.highlight}</h2><p>{page.highlightNote}</p><a href="/finance">Explore your farm budget →</a></aside>
         </div>
       </section>
       <div className="container serviceBody">
         <article className="serviceArticle">
           {page.slug === 'fish-farming-training-uganda' && <SaturdayTraining />}
+          {page.slug === 'fish-tanks-uganda' && (
+            <div className="tankPhotos">
+              <figure><img src="/images/tank-layout.jpg" alt="Two rows of round, blue-lined tanks beneath a metal frame" width="765" height="1020" /><figcaption>The tank layout viewed from the front.</figcaption></figure>
+              <figure><img src="/images/tank-walkway.jpg" alt="Grated walkway between the two rows of fish tanks" width="765" height="1020" /><figcaption>The central walkway gives access to both rows.</figcaption></figure>
+            </div>
+          )}
           {page.prices && <section aria-labelledby="prices-heading"><h2 id="prices-heading">Published prices</h2><div className="servicePrices">{page.prices.map(price => <div className="servicePrice" key={price.label}><h3>{price.label}</h3><strong>{price.price}</strong><p>{price.note}</p></div>)}</div><p className="serviceSmall">Confirm availability, dates and the final quotation before booking or ordering.</p></section>}
           {page.sections.map(section => <section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs?.map(text => <p key={text}>{text}</p>)}{section.bullets && <ul>{section.bullets.map(text => <li key={text}>{text}</li>)}</ul>}</section>)}
           <section className="faqWrap"><h2>Questions before you enquire</h2>{page.questions.map(item => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</section>
