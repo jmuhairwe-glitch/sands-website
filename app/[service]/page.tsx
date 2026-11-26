@@ -54,6 +54,16 @@ export default async function ServicePage({ params }: { params: Promise<{ servic
               <figure><img src="/images/tank-walkway.jpg" alt="Grated walkway between the two rows of fish tanks" width="765" height="1020" /><figcaption>The central walkway gives access to both rows.</figcaption></figure>
             </div>
           )}
+          {page.slug === 'fish-tanks-uganda' && (
+            <section aria-labelledby="tank-video-title">
+              <h2 id="tank-video-title">Watch a fish tank being assembled</h2>
+              <p>See how the base and curved wall panels fit together. The video runs for 1 minute 46 seconds.</p>
+              <video className="tankAssemblyVideo" controls playsInline preload="none" poster="/images/tank-assembly.jpg" width="640" height="368" aria-labelledby="tank-video-title">
+                <source src="/video/tank-assembly.mp4" type="video/mp4" />
+                <a href="/video/tank-assembly.mp4">Open the tank assembly video</a>
+              </video>
+            </section>
+          )}
           {page.prices && <section aria-labelledby="prices-heading"><h2 id="prices-heading">Published prices</h2><div className="servicePrices">{page.prices.map(price => <div className="servicePrice" key={price.label}><h3>{price.label}</h3><strong>{price.price}</strong><p>{price.note}</p></div>)}</div><p className="serviceSmall">Confirm availability, dates and the final quotation before booking or ordering.</p></section>}
           {page.sections.map(section => <section key={section.heading}><h2>{section.heading}</h2>{section.paragraphs?.map(text => <p key={text}>{text}</p>)}{section.bullets && <ul>{section.bullets.map(text => <li key={text}>{text}</li>)}</ul>}</section>)}
           <section className="faqWrap"><h2>Questions before you enquire</h2>{page.questions.map(item => <details key={item.question}><summary>{item.question}</summary><p>{item.answer}</p></details>)}</section>

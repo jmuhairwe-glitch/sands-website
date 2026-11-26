@@ -53,3 +53,4 @@
 .serviceIllustration { display: block; width: 100%; height: auto; border-radius: 10px; margin-bottom: 14px; }
 .trainingIllustration { margin: 0 0 18px; }
 .trainingIllustration figcaption { font-size: .85rem; }
+.tankAssemblyVideo { display: block; width: 100%; height: auto; border-radius: 12px; background: #102d37; }
